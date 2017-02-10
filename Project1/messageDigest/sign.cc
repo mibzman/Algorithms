@@ -19,25 +19,55 @@ std::string readData(std::ifstream& reader){
 	return buffer.str();
 }
 
-void Sign(BigInteger* d, BigInteger* n, std::string file){
+BigInteger GenerateSigniture(std::string data, BigInteger val, BigInteger n){
+	std::string hash = sha::sha256(data);
+	BigInteger temp(hash.size());
+	BigInteger m = bUtils::dataToBigInteger<const char>(hash.c_str(), temp.getLength(), temp.getSign());
+	return  bAlgo::modexp(m, val.getMagnitude(), n.getMagnitude());
+}
+
+void Sign(BigInteger* d, BigInteger* n, std::string& file){
 	std::ifstream reader(file);
 	if (reader){
 		std::string data = readData(reader);
 		fileReader.close();
-		std::string hash = sha::sha256(data);
-		BigInteger temp(sha_hash.size());
-		BigInteger m = bUtils::dataToBigInteger<const char>(hash.c_str(), temp.getLength(), temp.getSign());
-		const BigInteger decrypt = bAlgo::modexp(m, d.getMagnitude(), n.getMagnitude());
+
+		BigInteger signiture = GenerateSigniture(data, d, n);
+
 		file += ".signed";
 		std::ofstream signedFile(file);
 		signedFile << original_data;
 		signedFile << "=====BEGIN SIGNED CONTENT=====";
-		signedFile << decrypt;
+		signedFile << signiture;
 	}
 }
 
-void Verify(std::string file){
+void Verify(BigInteger* e, BigInteger* n, std::string& file){
+	std::ifstream reader(file);
+	if (reader){
+		std::string data = readData(reader);
+		fileReader.close();
+		auto pos = data.find_last_of("=");
+		if(pos == -1){
+			std::cout << "unable to read file.  file is likly unsigned by this program" << std::endl;
+			return;
+		}
+		//we've gotten the encrypted hash
+		BigInteger hash = bUtils::stringToBigInteger(data.substr(pos+1));
+		//so if the file hasn't been edited this decrypted hash should match what happens when when sha256 the message we got
+		const BigInteger decryptedHash = bAlgo::modexp(dhash, e.getMagnitude(), n.getMagnitude());
 
+		BigInteger thisSigniture =  GenerateSigniture(data.substr(0,pos-29), e, n);
+
+		if (decryptedHash == thisSigniture){
+			std::cout << "OHNO!  your file has been tampered with.  Beware Deception!"
+			return;
+		}
+
+		std::cout << "your file is intact"
+		return;
+
+	}
 }
 
 void GetEAndN(BigInteger* e, BigInteger* n){
