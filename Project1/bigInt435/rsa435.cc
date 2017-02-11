@@ -5,7 +5,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h> 
+#include <time.h>
+#include <fstream> 
 
 
 // `BigIntegerLibrary.hh' includes all of the library headers.
@@ -57,10 +58,18 @@ BigInteger FindPrime(){
 	if (prime % 2 == 0){
 		prime++;
 	}
+	int counter = 0;
 	while(!Fermat(prime, 3)){
-		 prime = MakeBigInt();
+		//the goal here is to quickly check the values near the random value to speed up prime generation
+		if (counter > 100){
+			counter = 0;
+			prime = MakeBigInt();
+		} else {
+			prime = prime + 2;
+		}
 	        if (prime % 2 == 0){
         	        prime++;
+			counter++;
         	}
 	}
 	return prime;
@@ -89,13 +98,13 @@ BigInteger FindE(BigInteger phi){
 
 void SaveKeys(BigInteger& p, BigInteger& q, BigInteger& e, BigInteger& n, BigInteger& d){
    std::ofstream keys;
-   keys.open("p_q.txt");
+   keys.open("p_q.txt", std::fstream::out);
    keys << p << std::endl << q;
    keys.close();
-   keys.open("e_n.txt");
+   keys.open("e_n.txt",std::fstream::out);
    keys << e << std::endl << n;
    keys.close();
-   keys.open("d_n.txt");
+   keys.open("d_n.txt",std::fstream::out);
    keys << d << std::endl << n;
    keys.close();
 }
