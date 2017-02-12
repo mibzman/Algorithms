@@ -52,7 +52,11 @@ void Sign(BigInteger d, BigInteger n, std::string& file){
 		std::ofstream signedFile(file);
 		signedFile << data;
 		signedFile << "=====BEGIN SIGNED CONTENT=====";
-		signedFile << signiture;
+		//you have to append an return character because pretty much every text editor adds it anyway
+		//if you don't add it here and someone opens the signed file and modifys it, that editor will add a return character
+		//then when bigintger tries to read it in it'll choke and die.
+		//so I'm adding it here
+		signedFile << signiture << std::endl;
 	}
 }
 
@@ -68,18 +72,20 @@ void Verify(BigInteger e, BigInteger n, std::string& file){
 			return;
 		}
 		//we've gotten the encrypted hash
-		//std::cout << data.substr(pos+1) << std::endl;
-		BigInteger hash = bUtils::stringToBigInteger(data.substr(pos+1));
+		std::cout << data.substr(data.length()-1);
+		//ignores the return character
+		BigInteger hash = bUtils::stringToBigInteger(data.substr(pos+1, data.length()-pos-2));
 		//so if the file hasn't been edited this decrypted hash should match what happens when when sha256 the message we got
+		//std::cout << "borkborklbork" << std::endl;
 		const BigInteger decryptedHash = bAlgos::modexp(hash, e.getMagnitude(), n.getMagnitude());
-		//std::cout << data.substr(0,pos-30);
+		//std::cout << data.substr(0,pos-29);
 		std::string tempSigniture =  sha::sha256(data.substr(0,pos-29));
         	BigInteger temp(tempSigniture.size());
         	BigInteger thisSigniture = bUtils::dataToBigInteger<const char>(tempSigniture.c_str(), temp.getLength(), temp.getSign());
 
 		if (decryptedHash != thisSigniture){
 			std::cout << "OHNO!  your file has been tampered with.  Beware Deception!" << std::endl;
-			std::cout << "Decrypted hash: " << std::endl << decryptedHash  << std::endl << "this signiture: "  << std::endl << thisSigniture << std::endl;
+		//	std::cout << "Decrypted hash: " << std::endl << decryptedHash  << std::endl << "this signiture: "  << std::endl << thisSigniture << std::endl;
 			return;
 		}
 
