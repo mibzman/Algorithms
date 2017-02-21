@@ -245,8 +245,8 @@ std::vector<int> readBinary(std::string file) {
   std::vector<int> output;
   int counter = 0;
   while (counter <= s.length()){
-    output.push_back(binaryString2Int(s.substr(counter, counter+9)));
-    counter += 8;
+    output.push_back(binaryString2Int(s.substr(counter, 9)));
+    counter += 9;
   }
    return output;
 }
@@ -255,21 +255,14 @@ void printBinary(std::string file, std::vector<int> compressed){
     int c = 69;
    int bits = 9;
    std::string p = int2BinaryString(c, bits);
-   //std::cout << "c=" << c <<" : binary string="<<p<<"; back to code=" << binaryString2Int(p)<<"\n";
    
    std::string bcode= "";
    for (std::vector<int>::iterator it = compressed.begin() ; it != compressed.end(); ++it) {
-      if (*it<256)
-         bits = 8;
-      else
-         bits = 9;
       p = int2BinaryString(*it, bits);
-      //std::cout << "c=" << *it <<" : binary string="<<p<<"; back to code=" << binaryString2Int(p)<<"\n";
       bcode+=p;
    }
    
    //writing to file
-   //std::cout << "string 2 save : "<<bcode << "\n";
    std::ofstream myfile;
    myfile.open(file.c_str(),  std::ios::binary);
    
