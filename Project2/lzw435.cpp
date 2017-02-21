@@ -85,7 +85,7 @@ std::string int2BinaryString(int c, int cl) {
       }
       int zeros = cl-p.size();
       if (zeros<0) {
-         std::cout << "\nWarning: Overflow. code is too big to be coded by " << cl <<" bits!\n";
+         //std::cout << "\nWarning: Overflow. code is too big to be coded by " << cl <<" bits!\n";
          p = p.substr(p.size()-cl);
       }
       else {
@@ -115,7 +115,7 @@ void binaryIODemo(std::vector<int> compressed) {
    int c = 69;
    int bits = 9;
    std::string p = int2BinaryString(c, bits);
-   std::cout << "c=" << c <<" : binary string="<<p<<"; back to code=" << binaryString2Int(p)<<"\n";
+   //std::cout << "c=" << c <<" : binary string="<<p<<"; back to code=" << binaryString2Int(p)<<"\n";
    
    std::string bcode= "";
    for (std::vector<int>::iterator it = compressed.begin() ; it != compressed.end(); ++it) {
@@ -124,12 +124,12 @@ void binaryIODemo(std::vector<int> compressed) {
       else
          bits = 9;
       p = int2BinaryString(*it, bits);
-      std::cout << "c=" << *it <<" : binary string="<<p<<"; back to code=" << binaryString2Int(p)<<"\n";
+      //std::cout << "c=" << *it <<" : binary string="<<p<<"; back to code=" << binaryString2Int(p)<<"\n";
       bcode+=p;
    }
    
    //writing to file
-   std::cout << "string 2 save : "<<bcode << "\n";
+   //std::cout << "string 2 save : "<<bcode << "\n";
    std::string fileName = "example435.lzw";
    std::ofstream myfile;
    myfile.open(fileName.c_str(),  std::ios::binary);
@@ -179,16 +179,17 @@ void binaryIODemo(std::vector<int> compressed) {
       count++;
    } 
    myfile2.close();
-   std::cout << " saved string : "<<s << "\n"; 
+   //std::cout << " saved string : "<<s << "\n"; 
 }
+
  
 int main() {
   std::vector<int> compressed;
   compress("TOBEORNOTTOBEORTOBEORNOT", std::back_inserter(compressed));
   copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
-  std::cout << std::endl;
+  //std::cout << std::endl;
   std::string decompressed = decompress(compressed.begin(), compressed.end());
-  std::cout << decompressed << std::endl;
+  //std::cout << decompressed << std::endl;
   
   binaryIODemo(compressed);
   
