@@ -1,0 +1,19 @@
+reset;
+sudo cmake ..; 
+sudo make;
+if [ $? -eq 0 ];
+then
+    echo -- Program Built;
+        sudo ./LZW d test.txt.zip;
+        if [ $? -eq 139 ];
+        then
+            echo "-- Program crashed!";
+            gdb ./LZW;
+
+        else
+                echo -- Program Run;
+        fi
+
+else 
+	echo "-- Program Failed to Build!";       
+fi
