@@ -9,13 +9,6 @@
 
 #include <sstream>
 
-/*
-  This code is derived for UA CS435 from LZW@RosettaCode
-*/ 
- 
-// Compress a string to a list of output symbols.
-// The result will be written to the output iterator
-// starting at "result"; the final iterator is returned.
 
 std::string readData(std::ifstream& reader){
 	std::stringstream buffer;
@@ -212,6 +205,14 @@ bool binaryTest(std::vector<int> compressed) {
   return compressed == output;
 }
 
+bool binaryIOTest(std::string file std::vector<int> data){
+  printBinary(file, compressed);
+
+  std::std::vector<int> result = readBinary(file);
+
+  return result == data;
+}
+
 std::vector<int> readBinary(std::string file) {   
   //reading from a file
   std::ifstream myfile2;
@@ -303,7 +304,7 @@ int main(int argn, char *args[]) {
 
   if (*args[1] == 'c'){
     compress(file, std::back_inserter(compressed));
-    //std::cout << binaryTest(compressed) << std::endl;
+    std::cout << binaryIOTest(testFile, compressed) << std::endl;
     //copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
     printBinary(file + ".lzw", compressed);
   } else if (*args[1] == 'd'){
