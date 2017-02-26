@@ -204,14 +204,7 @@ bool binaryTest(std::vector<int> compressed) {
   output.pop_back();
   return compressed == output;
 }
-/*
-bool binaryIOTest(std::string file, std::vector<int> data){
-  printBinary(file, data);
 
-  std::vector<int> result = readBinary(file);
-
-  return result == data;
-}*/
 
 std::vector<int> readBinary(std::string file) {   
   //reading from a file
@@ -297,6 +290,13 @@ bool binaryIOTest(std::string file, std::vector<int> data){
   printBinary(file, data);
 
   std::vector<int> result = readBinary(file);
+
+  for (int counter = 0; counter < compressed.size(); counter++){
+    if (data[counter] != result[counter]){
+      std::cout << "Difference Ditected at: " << std::endl;
+      std::cout << counter << "/" << compressed.size << std::endl;
+    }
+  }
 
   return result == data;
 }
