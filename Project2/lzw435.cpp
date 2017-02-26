@@ -213,7 +213,7 @@ std::vector<int> readBinary(std::string file) {
   struct stat filestatus;
   stat(file.c_str(), &filestatus );
   long fsize = filestatus.st_size; //get the size of the file in bytes
-  std::string zeros = "00000000";
+  std::string zeros = "000000000";
   char c2[fsize];
   myfile2.read(c2, fsize);
 
@@ -222,14 +222,14 @@ std::vector<int> readBinary(std::string file) {
   while(count<fsize) {
     unsigned char uc =  (unsigned char) c2[count];
     std::string p = ""; //a binary string
-    for (int j=0; j<8 && uc>0; j++) {         
+    for (int j=0; j<9 && uc>0; j++) {         
      if (uc%2==0)
           p="0"+p;
        else
           p="1"+p;
        uc=uc>>1;   
     }
-    p = zeros.substr(0, 8-p.size()) + p; //pad 0s to left if needed
+    p = zeros.substr(0, 9-p.size()) + p; //pad 0s to left if needed
     s+= p; 
     count++;
   } 
@@ -261,14 +261,14 @@ void printBinary(std::string file, std::vector<int> compressed){
    std::ofstream myfile;
    myfile.open(file.c_str(),  std::ios::binary);
    
-   std::string zeros = "00000000";
-   if (bcode.size()%8!=0) //make sure the length of the binary string is a multiple of 8
-      bcode += zeros.substr(0, 8-bcode.size()%8);
+   std::string zeros = "000000000";
+   if (bcode.size()%9!=0) //make sure the length of the binary string is a multiple of 8
+      bcode += zeros.substr(0, 9-bcode.size()%9);
    
    int b; 
-   for (int i = 0; i < bcode.size(); i+=8) { 
+   for (int i = 0; i < bcode.size(); i+=9) { 
       b = 1;
-      for (int j = 0; j < 8; j++) {
+      for (int j = 0; j < 9; j++) {
          b = b<<1;
          if (bcode.at(i+j) == '1')
            b+=1;
@@ -287,14 +287,15 @@ void printPlainText(std::string filename, std::string text){
 
 
 bool binaryIOTest(std::string file, std::vector<int> data){
-  printBinary(file, data);
+  printBinary(file + "test", data);
 
-  std::vector<int> result = readBinary(file);
+  std::vector<int> result = readBinary(file + "test");
 
-  for (int counter = 0; counter < compressed.size(); counter++){
+  for (int counter = 0; counter < data.size(); counter++){
     if (data[counter] != result[counter]){
-      std::cout << "Difference Ditected at: " << std::endl;
-      std::cout << counter << "/" << compressed.size << std::endl;
+      std::cout << "Difference found at: " << std::endl;
+      std::cout << counter << "/" << data.size() << "/" << result.size() << std::endl;
+      break;
     }
   }
 
