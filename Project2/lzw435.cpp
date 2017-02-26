@@ -242,7 +242,6 @@ std::vector<int> readBinary(std::string file) {
     output.push_back(binaryString2Int(s.substr(counter, 9)));
     counter += 9;
   }
-   output.pop_back();
    return output;
 }
 
@@ -301,8 +300,6 @@ bool binaryIOTest(std::string file, std::vector<int> data){
 
   return result == data;
 }
-
-
  
 int main(int argn, char *args[]) {
   assert("Bad arguments.  Flags should be wither v or s" && argn == 3);
@@ -315,15 +312,19 @@ int main(int argn, char *args[]) {
 
   if (*args[1] == 'c'){
     compress(file, std::back_inserter(compressed));
-    std::cout << binaryIOTest(file, compressed) << std::endl;
+//    std::cout << binaryIOTest(file, compressed) << std::endl;
     //copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
-    printBinary(file + ".lzw", compressed);
+    printBinary(file + ".zip", compressed);
   } else if (*args[1] == 'd'){
     compressed = readBinary(file);
-    //copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
-    std::string decompressed = decompress(compressed.begin(), compressed.end());
-    printPlainText(file, decompressed);
-  } else{
+    copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
+    //std::string decompressed = decompress(compressed.begin(), compressed.end());
+    //std::cout << decompressed << std::endl;
+  }else if (*args[1] == 't'){
+    std::cout << "Testing" << std::endl;
+    compress(file, std::back_inserter(compressed));
+    std::cout << binaryIOTest(file, compressed) << std::endl;
+  }else{
     std::cout << "wrong flags.  Please enter either c or d followed by the file" << std::endl;
     return 1;
   }
