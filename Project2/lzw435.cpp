@@ -204,14 +204,14 @@ bool binaryTest(std::vector<int> compressed) {
   output.pop_back();
   return compressed == output;
 }
+/*
+bool binaryIOTest(std::string file, std::vector<int> data){
+  printBinary(file, data);
 
-bool binaryIOTest(std::string file std::vector<int> data){
-  printBinary(file, compressed);
-
-  std::std::vector<int> result = readBinary(file);
+  std::vector<int> result = readBinary(file);
 
   return result == data;
-}
+}*/
 
 std::vector<int> readBinary(std::string file) {   
   //reading from a file
@@ -292,6 +292,16 @@ void printPlainText(std::string filename, std::string text){
   outputFile << text;
 }
 
+
+bool binaryIOTest(std::string file, std::vector<int> data){
+  printBinary(file, data);
+
+  std::vector<int> result = readBinary(file);
+
+  return result == data;
+}
+
+
  
 int main(int argn, char *args[]) {
   assert("Bad arguments.  Flags should be wither v or s" && argn == 3);
@@ -304,7 +314,7 @@ int main(int argn, char *args[]) {
 
   if (*args[1] == 'c'){
     compress(file, std::back_inserter(compressed));
-    std::cout << binaryIOTest(testFile, compressed) << std::endl;
+    std::cout << binaryIOTest(file, compressed) << std::endl;
     //copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
     printBinary(file + ".lzw", compressed);
   } else if (*args[1] == 'd'){
