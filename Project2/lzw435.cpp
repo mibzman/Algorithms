@@ -126,93 +126,6 @@ int binaryString2Int(std::string p) {
    return code;
 }
 
-bool binaryTest(std::vector<int> compressed) {
-   int c = 69;
-   //int bits = 9;
-   std::string p = int2BinaryString(c);
-   
-   std::string bcode= "";
-   for (std::vector<int>::iterator it = compressed.begin() ; it != compressed.end(); ++it) {
-      //if (*it<256)
-        // bits = 8;
-      //else
-        // bits = 9;
-      p = int2BinaryString(*it);
-      bcode+=p;
-   }
-   
-   //writing to file
-   std::string fileName = "example435.lzw";
-   std::ofstream myfile;
-   myfile.open(fileName.c_str(),  std::ios::binary);
-   
-   std::string zeros = "00000000";
-   if (bcode.size()%8!=0) //make sure the length of the binary string is a multiple of 8
-      bcode += zeros.substr(0, 8-bcode.size()%8);
-   
-   int b; 
-   for (int i = 0; i < bcode.size(); i+=8) { 
-      b = 1;
-      for (int j = 0; j < 8; j++) {
-         b = b<<1;
-         if (bcode.at(i+j) == '1')
-           b+=1;
-      }
-      char c = (char) (b & 255); //save the string byte by byte
-      myfile.write(&c, 1);  
-   }
-   myfile.close();
-   
-   //reading from a file
-   std::ifstream myfile2;
-   myfile2.open (fileName.c_str(),  std::ios::binary);
-   
-   struct stat filestatus;
-   stat(fileName.c_str(), &filestatus );
-   long fsize = filestatus.st_size; //get the size of the file in bytes
-   
-   char c2[fsize];
-   myfile2.read(c2, fsize);
-   
-   std::string s = "";
-   long count = 0;
-   while(count<fsize) {
-      unsigned char uc =  (unsigned char) c2[count];
-      std::string p = ""; //a binary string
-      for (int j=0; j<8 && uc>0; j++) {         
-		   if (uc%2==0)
-            p="0"+p;
-         else
-            p="1"+p;
-         uc=uc>>1;   
-      }
-      p = zeros.substr(0, 8-p.size()) + p; //pad 0s to left if needed
-      s+= p; 
-      count++;
-   } 
-   myfile2.close();
-
-  std::vector<int> output;
-  int counter = 0;
-  while (counter <= s.length()){
-    output.push_back(binaryString2Int(s.substr(counter, 9)));
-    counter += 9;
-  }
-  std::cout << "compressed: "; 
-  copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
-  std::cout << std::endl << "----output: ";
-  copy(output.begin(), output.end(), std::ostream_iterator<int>(std::cout, ", "));
-  std::cout << std::endl;
-
-
-  for (int counter2 = 0; counter2 < compressed.size(); counter2++){
-    std::cout << "does " << compressed[counter2] << " == " << output[counter2] << std::endl;
-  }
-  output.pop_back();
-  return compressed == output;
-}
-
-
 std::vector<int> readBinary(std::string file) {   
   //reading from a file
   std::ifstream myfile2;
@@ -277,7 +190,7 @@ void printBinary(std::string file, std::vector<int> compressed){
    
    std::string zeros = "000000000";
    if (bcode.size()%8!=0) //make sure the length of the binary string is a multiple of 8
-      bcode += zeros.substr(0, 9-bcode.size()%9);
+      bcode += zeros.substr(0, 8-bcode.size()%8);
    
    int b; 
    for (int i = 0; i < bcode.size(); i+=8) { 
