@@ -39,7 +39,9 @@ Iterator compress(std::string file, Iterator result) {
     else {
       *result++ = dictionary[w];
       // Add wc to the dictionary.
-      dictionary[wc] = dictSize++;
+      if(dictionary.size() < 512){
+        dictionary[wc] = dictSize++;
+      }
       w = std::string(1, c);
     }
   }
@@ -76,6 +78,7 @@ std::string decompress(Iterator begin, Iterator end) {
  
     // Add w+entry[0] to the dictionary.
     dictionary[dictSize++] = w + entry[0];
+    
  
     w = entry;
   }
@@ -222,14 +225,14 @@ std::vector<int> readBinary(std::string file) {
   while(count<fsize) {
     unsigned char uc =  (unsigned char) c2[count];
     std::string p = ""; //a binary string
-    for (int j=0; j<9 && uc>0; j++) {         
+    for (int j=0; j<8 && uc>0; j++) {         
      if (uc%2==0)
           p="0"+p;
        else
           p="1"+p;
        uc=uc>>1;   
     }
-    p = zeros.substr(0, 9-p.size()) + p; //pad 0s to left if needed
+    p = zeros.substr(0, 8-p.size()) + p; //pad 0s to left if needed
     s+= p; 
     count++;
   } 
@@ -242,7 +245,15 @@ std::vector<int> readBinary(std::string file) {
     output.push_back(binaryString2Int(s.substr(counter, 9)));
     counter += 9;
   }
-   return output;
+
+
+  //scrub trailing newlines
+  counter = output.size() -1;
+  while (output[counter] == 0){
+    output.pop_back();
+    counter--;
+  }
+  return output;
 }
 
 void printBinary(std::string file, std::vector<int> compressed){
@@ -261,13 +272,13 @@ void printBinary(std::string file, std::vector<int> compressed){
    myfile.open(file.c_str(),  std::ios::binary);
    
    std::string zeros = "000000000";
-   if (bcode.size()%9!=0) //make sure the length of the binary string is a multiple of 8
+   if (bcode.size()%8!=0) //make sure the length of the binary string is a multiple of 8
       bcode += zeros.substr(0, 9-bcode.size()%9);
    
    int b; 
-   for (int i = 0; i < bcode.size(); i+=9) { 
+   for (int i = 0; i < bcode.size(); i+=8) { 
       b = 1;
-      for (int j = 0; j < 9; j++) {
+      for (int j = 0; j < 8; j++) {
          b = b<<1;
          if (bcode.at(i+j) == '1')
            b+=1;
@@ -289,16 +300,34 @@ bool binaryIOTest(std::string file, std::vector<int> data){
   printBinary(file + "test", data);
 
   std::vector<int> result = readBinary(file + "test");
-
+  int overageCounter = 0;
   for (int counter = 0; counter < data.size(); counter++){
     if (data[counter] != result[counter]){
       std::cout << "Difference found at: " << std::endl;
       std::cout << counter << "/" << data.size() << "/" << result.size() << std::endl;
+      for (int counter2 = counter -5; counter2 < counter + 5; counter2++){
+        std::cout << "does " << data[counter2] << " == " << result[counter2] << std::endl;
+      }
       break;
+     //overageCounter++;
+    }
+    if (data[counter] > 512){
+       overageCounter++;
     }
   }
-
+  //result.pop_back();
+  if (data.size() != result.size()){
+    std::cout << "length different: "  << data.size() << " , " << result.size()<< std::endl;
+    std::cout << "last output val: " << result[result.size() - 2] << std::endl;
+  }
+  std::cout << "over 512: " << overageCounter << std::endl;
   return result == data;
+}
+
+bool binaryConversionTest(){
+  std::string threeHundred = int2BinaryString(300, 9);
+  int result = binaryString2Int(threeHundred);
+  return 300 == result;
 }
  
 int main(int argn, char *args[]) {
@@ -314,15 +343,16 @@ int main(int argn, char *args[]) {
     compress(file, std::back_inserter(compressed));
 //    std::cout << binaryIOTest(file, compressed) << std::endl;
     //copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
-    printBinary(file + ".zip", compressed);
+    printBinary(file + ".lzw", compressed);
   } else if (*args[1] == 'd'){
     compressed = readBinary(file);
-    copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
-    //std::string decompressed = decompress(compressed.begin(), compressed.end());
-    //std::cout << decompressed << std::endl;
+    //copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
+    std::string decompressed = decompress(compressed.begin(), compressed.end());
+    printPlainText(file, decompressed);
   }else if (*args[1] == 't'){
     std::cout << "Testing" << std::endl;
     compress(file, std::back_inserter(compressed));
+    std::cout << binaryConversionTest()  << std::endl;
     std::cout << binaryIOTest(file, compressed) << std::endl;
   }else{
     std::cout << "wrong flags.  Please enter either c or d followed by the file" << std::endl;
