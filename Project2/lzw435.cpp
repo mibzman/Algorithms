@@ -85,7 +85,10 @@ std::string decompress(Iterator begin, Iterator end) {
   return result;
 }
 
-std::string int2BinaryString(int c, int cl) {
+std::string int2BinaryString(int c) {
+      int val = c;
+      for (int cl = 0; val > 0; val >>= 1)
+        cl++;
       std::string p = ""; //a binary code string with code length = cl
       while (c>0) {         
 		   if (c%2==0)
@@ -125,7 +128,7 @@ int binaryString2Int(std::string p) {
 bool binaryTest(std::vector<int> compressed) {
    int c = 69;
    //int bits = 9;
-   std::string p = int2BinaryString(c, 9);
+   std::string p = int2BinaryString(c);
    
    std::string bcode= "";
    for (std::vector<int>::iterator it = compressed.begin() ; it != compressed.end(); ++it) {
@@ -133,7 +136,7 @@ bool binaryTest(std::vector<int> compressed) {
         // bits = 8;
       //else
         // bits = 9;
-      p = int2BinaryString(*it, 9);
+      p = int2BinaryString(*it);
       bcode+=p;
    }
    
@@ -259,11 +262,11 @@ std::vector<int> readBinary(std::string file) {
 void printBinary(std::string file, std::vector<int> compressed){
     int c = 69;
    int bits = 9;
-   std::string p = int2BinaryString(c, bits);
+   std::string p = int2BinaryString(c);
    
    std::string bcode= "";
    for (std::vector<int>::iterator it = compressed.begin() ; it != compressed.end(); ++it) {
-      p = int2BinaryString(*it, bits);
+      p = int2BinaryString(*it);
       bcode+=p;
    }
    
@@ -325,7 +328,7 @@ bool binaryIOTest(std::string file, std::vector<int> data){
 }
 
 bool binaryConversionTest(){
-  std::string threeHundred = int2BinaryString(300, 9);
+  std::string threeHundred = int2BinaryString(300);
   int result = binaryString2Int(threeHundred);
   return 300 == result;
 }
