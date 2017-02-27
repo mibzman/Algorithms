@@ -87,7 +87,8 @@ std::string decompress(Iterator begin, Iterator end) {
 
 std::string int2BinaryString(int c) {
       int val = c;
-      for (int cl = 0; val > 0; val >>= 1)
+      int cl;
+      for (cl = 0; val > 0; val >>= 1)
         cl++;
       std::string p = ""; //a binary code string with code length = cl
       while (c>0) {         
