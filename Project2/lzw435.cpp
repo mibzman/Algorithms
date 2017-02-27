@@ -133,7 +133,7 @@ std::vector<int> readBinary(std::string file) {
   struct stat filestatus;
   stat(file.c_str(), &filestatus );
   long fsize = filestatus.st_size; //get the size of the file in bytes
-  std::string zeros = "00000000";
+  std::string zeros = "000000000";
   char c2[fsize];
   myfile2.read(c2, fsize);
 
@@ -193,9 +193,9 @@ void printBinary(std::string file, std::vector<int> compressed){
       bcode += zeros.substr(0, 8-bcode.size()%8);
    
    int b; 
-   for (int i = 0; i < bcode.size(); i+=8) {       
+   for (int i = 0; i < bcode.size(); i+=8) { 
       b = 1;
-      for (int j = 0; j < 8; j++) {
+      for (int j = 0; j < 9; j++) {
          b = b<<1;
          if (bcode.at(i+j) == '1')
            b+=1;
