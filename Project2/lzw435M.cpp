@@ -9,7 +9,7 @@
 
 #include <sstream>
 
-/*sam borick's (sb205) lzw implementation.
+/*sam borick's (sb205) modified lzw implementation.
 This program will compress and decompress files using the LZW algorithm
 NOTE:  My implementation will almost certiantly not be able to decompress files compressed by another LZW implementation,
 due to issues with bit lengths
@@ -45,9 +45,9 @@ Iterator compress(std::string file, Iterator result) {
     else {
       *result++ = dictionary[w];
       // Add wc to the dictionary.
-      if(dictionary.size() < 512){
-        dictionary[wc] = dictSize++;
-      }
+      
+      dictionary[wc] = dictSize++;
+      
       w = std::string(1, c);
     }
   }
@@ -58,24 +58,81 @@ Iterator compress(std::string file, Iterator result) {
   return result;
 }
  
+std::string readBinaryFromFile(std::string file) {
+  
+
+  //get whatever is in the file
+  std::ifstream myfile2;
+  myfile2.open (file.c_str(),  std::ios::binary);
+  struct stat filestatus;
+  stat(file.c_str(), &filestatus );
+  long fsize = filestatus.st_size; //get the size of the file in bytes
+  std::string zeros = "00000000";
+  char c2[fsize];
+  myfile2.read(c2, fsize);
+
+  std::string s = "";
+  long count = 0;
+  while(count<fsize) {
+    unsigned char uc =  (unsigned char) c2[count];
+    std::string p = ""; //a binary string
+    for (int j=0; j<8 && uc>0; j++) {         
+     if (uc%2==0)
+          p="0"+p;
+       else
+          p="1"+p;
+       uc=uc>>1;   
+    }
+    p = zeros.substr(0, 8-p.size()) + p; //pad 0s to left if needed
+    s+= p; 
+    count++;
+  } 
+  myfile2.close();
+
+  //if we wrote this file than the first 8 bits are the flag that tell us how much padding there is
+  int flag = binaryString2Int(s.substr(0,8));
+  //remove flag and padding
+  s = s.substr(8+flag);
+  return s;
+}
+
+int getBitLengthForValue(int val){
+  for (cl = 0; val > 0; val >>= 1){
+    cl++;
+  }
+  return cl;
+}
+
 // Decompress a list of output ks to a string.
 // "begin" and "end" must form a valid range of ints
-template <typename Iterator>
-std::string decompress(Iterator begin, Iterator end) {
-  // Build the dictionary.
+std::string decompress(std::string file) {
   int dictSize = 256;
   std::map<int,std::string> dictionary;
   for (int i = 0; i < 256; i++)
     dictionary[i] = std::string(1, i);
- 
-  std::string w(1, *begin++);
-  std::string result = w;
+
+  std::string cBits = readBinaryFromFile(file);
+
+  int counter = 0;
+  std::string thisBitString;
+  int currentBitLength = 9;
+  int thisNum;
   std::string entry;
-  for ( ; begin != end; begin++) {
-    int k = *begin;
+  //get the first letter explicitly do it doesn't get added to the dictionanry again
+  std::string w(1, binaryString2Int(cBits.substr(counter, currentBitLength)));
+  std::string result = w;
+  counter += currentBitLength;
+
+  while (counter < strlen(cBits)){
+    currentBitLength = getBitLengthForValue(dictSize);
+    thisBitString = cBits.substr(counter, currentBitLength);
+    thisNum = binaryString2Int(thisBitString);
+    //hooray!  we've gotten the next number from the file.
+    //now we can do all the normal LZW stuff with it
+
     if (dictionary.count(k))
-      entry = dictionary[k];
-    else if (k == dictSize)
+      entry = dictionary[thisNum];
+    else if (thisNum == dictSize)
       entry = w + w[0];
     else
       throw "Bad compressed k";
@@ -83,22 +140,21 @@ std::string decompress(Iterator begin, Iterator end) {
     result += entry;
  
     // Add w+entry[0] to the dictionary.
-    
-    if (dictSize < 512){
-      dictionary[dictSize++] = w + entry[0];
-    }    
+    dictionary[dictSize++] = w + entry[0];
  
     w = entry;
+
+    counter += currentBitLength;    
   }
+
   return result;
-}
+} 
 
 std::string int2BinaryString(int c) {
       int val = c;
       int cl = 9;
       if (c >= 512){
-        for (cl = 0; val > 0; val >>= 1)
-          cl++;
+        cl = getBitLengthForValue(c);        
       }
       std::string p = ""; //a binary code string with code length = cl
       while (c>0) {         
@@ -203,43 +259,6 @@ void printBinary(std::string file, std::vector<int> compressed){
   writeBinaryToFile(file, binary);
 }
 
-std::string readBinaryFromFile(std::string file) {
-
-  //get whatever is in the file
-  std::ifstream myfile2;
-  myfile2.open (file.c_str(),  std::ios::binary);
-  struct stat filestatus;
-  stat(file.c_str(), &filestatus );
-  long fsize = filestatus.st_size; //get the size of the file in bytes
-  std::string zeros = "00000000";
-  char c2[fsize];
-  myfile2.read(c2, fsize);
-
-  std::string s = "";
-  long count = 0;
-  while(count<fsize) {
-    unsigned char uc =  (unsigned char) c2[count];
-    std::string p = ""; //a binary string
-    for (int j=0; j<8 && uc>0; j++) {         
-     if (uc%2==0)
-          p="0"+p;
-       else
-          p="1"+p;
-       uc=uc>>1;   
-    }
-    p = zeros.substr(0, 8-p.size()) + p; //pad 0s to left if needed
-    s+= p; 
-    count++;
-  } 
-  myfile2.close();
-
-  //if we wrote this file than the first 8 bits are the flag that tell us how much padding there is
-  int flag = binaryString2Int(s.substr(0,8));
-  //remove flag and padding
-  s = s.substr(8+flag);
-  return s;
-}
-
 std::vector<int> convertBinaryToInts(std::string binary){
    std::vector<int> output;
   int counter = 0;
@@ -338,13 +357,9 @@ int main(int argn, char *args[]) {
 
   if (*args[1] == 'c'){
     compress(file, std::back_inserter(compressed));
-//    std::cout << binaryIOTest(file, compressed) << std::endl;
-    //copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
     printBinary(file + ".lzw", compressed);
-  } else if (*args[1] == 'd'){
-    compressed = readBinary(file);
-    //copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
-    std::string decompressed = decompress(compressed.begin(), compressed.end());
+  } else if (*args[1] == 'd'){    
+    std::string decompressed = decompress(file);
     printPlainText(file, decompressed);
   }else if (*args[1] == 't'){
     std::cout << "Testing" << std::endl;
