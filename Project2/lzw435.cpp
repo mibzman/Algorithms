@@ -87,9 +87,11 @@ std::string decompress(Iterator begin, Iterator end) {
 
 std::string int2BinaryString(int c) {
       int val = c;
-      int cl;
-      for (cl = 0; val > 0; val >>= 1)
-        cl++;
+      int cl = 9;
+      if (c >= 512){
+        for (cl = 0; val > 0; val >>= 1)
+          cl++;
+      }
       std::string p = ""; //a binary code string with code length = cl
       while (c>0) {         
 		   if (c%2==0)
@@ -109,6 +111,29 @@ std::string int2BinaryString(int c) {
       }
       return p;
 }
+
+std::string int2BinaryString(int c, int cl) {
+      
+      std::string p = ""; //a binary code string with code length = cl
+      while (c>0) {
+                   if (c%2==0)
+            p="0"+p;
+         else
+            p="1"+p;
+         c=c>>1;
+      }
+      int zeros = cl-p.size();
+      if (zeros<0) {
+         //std::cout << "\nWarning: Overflow. code is too big to be coded by " << cl <<" bits!\n";
+         p = p.substr(p.size()-cl);
+      }
+      else {
+         for (int i=0; i<zeros; i++)  //pad 0s to left of the binary code if needed
+            p = "0" + p;
+      }
+      return p;
+}
+
 
 int binaryString2Int(std::string p) {
    int code = 0;
@@ -134,7 +159,8 @@ void printPlainText(std::string filename, std::string text){
 
 std::string convertIntsToBinary(std::vector<int> nums){
   std::string bcode= "";
-   for (std::vector<int>::iterator it = compressed.begin() ; it != compressed.end(); ++it) {
+  std::string p;
+   for (std::vector<int>::iterator it = nums.begin() ; it != nums.end(); ++it) {
       p = int2BinaryString(*it);
       bcode+=p;
    }
@@ -146,15 +172,16 @@ void writeBinaryToFile(std::string file, std::string binary){
    myfile.open(file.c_str(),  std::ios::binary);
    
    std::string zeros = "00000000";
-   if (bcode.size()%8!=0) //make sure the length of the binary string is a multiple of 8
-      bcode += zeros.substr(0, 8-bcode.size()%8);
+   int bitsNeeded = 8 - binary.size()%8; //calculate the padding needed
+   std::string flag = int2BinaryString(bitsNeeded, 8); //convert the padding needed to binary
+   binary = flag + zeros.substr(0, bitsNeeded) + binary; //first pesudobit
    
    int b; 
-   for (int i = 0; i < bcode.size(); i+=8) { 
+   for (int i = 0; i < binary.size(); i+=8) { 
       b = 1;
-      for (int j = 0; j < 9; j++) {
+      for (int j = 0; j < 8; j++) {
          b = b<<1;
-         if (bcode.at(i+j) == '1')
+         if (binary.at(i+j) == '1')
            b+=1;
       }
       char c = (char) (b & 255); //save the string byte by byte
@@ -169,6 +196,8 @@ void printBinary(std::string file, std::vector<int> compressed){
 }
 
 std::string readBinaryFromFile(std::string file) {
+
+  //get whatever is in the file
   std::ifstream myfile2;
   myfile2.open (file.c_str(),  std::ios::binary);
   struct stat filestatus;
@@ -195,14 +224,19 @@ std::string readBinaryFromFile(std::string file) {
     count++;
   } 
   myfile2.close();
+
+  //if we wrote this file than the first 8 bits are the flag that tell us how much padding there is
+  int flag = binaryString2Int(s.substr(0,8));
+  //remove flag and padding
+  s = s.substr(8+flag);
   return s;
 }
 
 std::vector<int> convertBinaryToInts(std::string binary){
    std::vector<int> output;
   int counter = 0;
-  while (counter <= s.length()){
-    output.push_back(binaryString2Int(s.substr(counter, 9)));
+  while (counter <= binary.length()){
+    output.push_back(binaryString2Int(binary.substr(counter, 9)));
     counter += 9;
   }
 
@@ -258,24 +292,27 @@ bool binaryConversionTest(){
 
 bool integerListConversionTest(){
   const int arr[] = {16,2,77,29,0,300,500};
-  vector<int> vec (arr, arr + sizeof(arr) / sizeof(arr[0]) );
+  std::vector<int> vec (arr, arr + sizeof(arr) / sizeof(arr[0]) );
+
+  //std::cout << convertIntsToBinary(vec) << std::endl;
+  //std::cout << convertBinaryToInts(convertIntsToBinary(vec)) << std::endl;
 
   return vec == convertBinaryToInts(convertIntsToBinary(vec));
 }
 
 bool readWriteIrregularBinaryTest(){
-  std::string data = "1100110010101"; //a non-8bit binary string
+  std::string data = "1111111111111"; //a non-8bit binary string
 
   writeBinaryToFile("wowWhatAGoodFilename2", data);
-
+  //std::cout << readBinaryFromFile("wowWhatAGoodFilename2") << std::endl;
   return data == readBinaryFromFile("wowWhatAGoodFilename2");
 }
 
 bool readWriteBinaryTest(){
-  std::string data = "1010101010101010"; 
+  std::string data = "1111111111111111"; 
 
   writeBinaryToFile("wowWhatAGoodFilename", data);
-
+  //std::cout << readBinaryFromFile("wowWhatAGoodFilename") << std::endl;
   return data == readBinaryFromFile("wowWhatAGoodFilename");
 }
  
@@ -301,10 +338,10 @@ int main(int argn, char *args[]) {
   }else if (*args[1] == 't'){
     std::cout << "Testing" << std::endl;
     compress(file, std::back_inserter(compressed));
-    std::cout << binaryConversionTest()  << std::endl;
-    std::cout << integerListConversionTest()  << std::endl;
-    std::cout << readWriteIrregularBinaryTest()  << std::endl;
-    std::cout << readWriteBinaryTest()  << std::endl;
+    std::cout << "binaryConversion: " << binaryConversionTest()  << std::endl;
+    std::cout << "intlist: " << integerListConversionTest()  << std::endl;
+    std::cout << "irregular: " << readWriteIrregularBinaryTest()  << std::endl;
+    std::cout << "regular: " << readWriteBinaryTest()  << std::endl;
     //std::cout << binaryIOTest(file, compressed) << std::endl;
   }else{
     std::cout << "wrong flags.  Please enter either c or d followed by the file" << std::endl;
