@@ -21,7 +21,13 @@ std::string readData(std::ifstream& reader){
 	buffer << reader.rdbuf();
 	return buffer.str();
 }
-
+int getBitLengthForValue(int val){
+  int bits;
+  for (bits = 0; val > 0; val >>= 1){
+    bits++;
+  }
+  return bits;
+}
 
 std::string int2BinaryString(int c) {
       int val = c;
@@ -69,6 +75,23 @@ std::string int2BinaryString(int c, int cl) {
             p = "0" + p;
       }
       return p;
+}
+
+
+int binaryString2Int(std::string p) {
+   int code = 0;
+   if (p.size()>0) {
+      if (p.at(0)=='1')
+         code = 1;
+      p = p.substr(1);
+      while (p.size()>0) {
+         code = code << 1;
+                   if (p.at(0)=='1')
+            code++;
+         p = p.substr(1);
+      }
+   }
+   return code;
 }
 
 
@@ -134,27 +157,6 @@ std::vector<int> convertBinaryToInts(std::string binary){
   return output;
 }
 
-std::vector<int> readBinary(std::string file) {
-  std::string binary = readBinaryFromFile(file);
-  return convertBinaryToInts(binary);
-}
-
-
-int binaryString2Int(std::string p) {
-   int code = 0;
-   if (p.size()>0) {
-      if (p.at(0)=='1')
-         code = 1;
-      p = p.substr(1);
-      while (p.size()>0) {
-         code = code << 1;
-                   if (p.at(0)=='1')
-            code++;
-         p = p.substr(1);
-      }
-   }
-   return code;
-}
  
 std::string readBinaryFromFile(std::string file) { 
 
@@ -193,15 +195,12 @@ std::string readBinaryFromFile(std::string file) {
   return s;
 }
 
-int getBitLengthForValue(int val){
-  int bits;
-  for (bits = 0; val > 0; val >>= 1){
-    bits++;
-  }
-  return bits;
+std::vector<int> readBinary(std::string file) {
+  std::string binary = readBinaryFromFile(file);
+  return convertBinaryToInts(binary);
 }
 
-template <typename Iterator>
+
 std::string compress(std::string file) {
   std::string output = "";
 
@@ -225,13 +224,13 @@ std::string compress(std::string file) {
       w = wc;
     else {
       //*result++ = dictionary[w];
-
+      //dictionary[wc] = dictSize++;
       //this makes sure that even if the value is less than the current bit size it correctly left pads
-      output += int2BinaryString(dictionary[w], getBitLengthForValue(dictSize));
+      output += int2BinaryString(dictionary[wc], getBitLengthForValue(dictSize));
       // Add wc to the dictionary.
-//  if (dictSize < 512){
-      dictionary[wc] = dictSize++;
-//  }
+      if (dictSize < 65536){
+        dictionary[wc] = dictSize++;
+      }
       
       w = std::string(1, c);
     }
@@ -245,7 +244,7 @@ std::string compress(std::string file) {
 
 // Decompress a list of output ks to a string.
 // "begin" and "end" must form a valid range of ints
-std::string decompress(std::string cbits) {
+std::string decompress(std::string cBits) {
   int dictSize = 256;
   std::map<int,std::string> dictionary;
   for (int i = 0; i < 256; i++)
@@ -261,8 +260,11 @@ std::string decompress(std::string cbits) {
   std::string w(1, binaryString2Int(cBits.substr(counter, currentBitLength)));
   std::string result = w;
   counter += currentBitLength;
+  int wordCounter = 0;
   //std::cout << "1" << std::endl;
   while (counter < cBits.size()){
+    wordCounter++;
+    //currentBitLength = getBitLengthForValue(dictSize);
     thisBitString = cBits.substr(counter, currentBitLength);
     thisNum = binaryString2Int(thisBitString);
     currentBitLength = getBitLengthForValue(dictSize);
@@ -276,9 +278,13 @@ std::string decompress(std::string cbits) {
       entry = w + w[0];
     else{
       std::cout << "bad compression!  Exprected: " << dictSize << " found: " << thisNum << std::endl;
+      std::cout << "words read: " << 256 + wordCounter << std::endl;
+      std::cout << "this word: " << thisBitString << std::endl;
+
       throw "Bad compressed k";
     }
     result += entry;
+//    std::cout << "result: " << result << std::endl;
  
     // Add w+entry[0] to the dictionary.
     dictionary[dictSize++] = w + entry[0];
@@ -330,7 +336,8 @@ void binaryIOTest(std::string file, std::vector<int> data){
 }
 
 bool binaryConversionTest(){
-  std::string threeHundred = int2BinaryString(300);
+  std::string threeHundred = int2BinaryString(400, 10);
+  std::cout << threeHundred << std::endl;
   int result = binaryString2Int(threeHundred);
   return 300 == result;
 }
@@ -374,15 +381,16 @@ int main(int argn, char *args[]) {
   std::vector<int> compressed;
 
   if (*args[1] == 'c'){
-    std::string data compress(file);
+    std::string data = compress(file);
     writeBinaryToFile(file + ".lzw", data);
   } else if (*args[1] == 'd'){    
     std::string data = readBinaryFromFile(file);
     std::string decompressed = decompress(data);
+    std::cout << decompressed << std::endl;
     printPlainText(file, decompressed);
   }else if (*args[1] == 't'){
     std::cout << "Testing" << std::endl;
-    compress(file, std::back_inserter(compressed));
+    compress(file);
     std::cout << "binaryConversion: " << binaryConversionTest()  << std::endl;
     std::cout << "intlist: " << integerListConversionTest()  << std::endl;
     std::cout << "irregular: " << readWriteIrregularBinaryTest()  << std::endl;
