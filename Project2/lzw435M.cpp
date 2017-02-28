@@ -22,153 +22,6 @@ std::string readData(std::ifstream& reader){
 	return buffer.str();
 }
 
-template <typename Iterator>
-Iterator compress(std::string file, Iterator result) {
-  std::string uncompressed;
-  std::ifstream reader(file);
-  uncompressed = readData(reader);
-  reader.close();
-
-  // Build the dictionary.
-  int dictSize = 256;
-  std::map<std::string,int> dictionary;
-  for (int i = 0; i < 256; i++)
-    dictionary[std::string(1, i)] = i;
- 
-  std::string w;
-  for (std::string::const_iterator it = uncompressed.begin();
-       it != uncompressed.end(); ++it) {
-    char c = *it;
-    std::string wc = w + c;
-    if (dictionary.count(wc))
-      w = wc;
-    else {
-      *result++ = dictionary[w];
-      // Add wc to the dictionary.
-//      if (dictSize < 512){
-        dictionary[wc] = dictSize++;
-  //    }
-      
-      w = std::string(1, c);
-    }
-  }
- 
-  // Output the code for w.
-  if (!w.empty())
-    *result++ = dictionary[w];
-  return result;
-}
-
-
-int binaryString2Int(std::string p) {
-   int code = 0;
-   if (p.size()>0) {
-      if (p.at(0)=='1')
-         code = 1;
-      p = p.substr(1);
-      while (p.size()>0) {
-         code = code << 1;
-                   if (p.at(0)=='1')
-            code++;
-         p = p.substr(1);
-      }
-   }
-   return code;
-}
- 
-std::string readBinaryFromFile(std::string file) {
-  
-
-  //get whatever is in the file
-  std::ifstream myfile2;
-  myfile2.open (file.c_str(),  std::ios::binary);
-  struct stat filestatus;
-  stat(file.c_str(), &filestatus );
-  long fsize = filestatus.st_size; //get the size of the file in bytes
-  std::string zeros = "00000000";
-  char c2[fsize];
-  myfile2.read(c2, fsize);
-
-  std::string s = "";
-  long count = 0;
-  while(count<fsize) {
-    unsigned char uc =  (unsigned char) c2[count];
-    std::string p = ""; //a binary string
-    for (int j=0; j<8 && uc>0; j++) {         
-     if (uc%2==0)
-          p="0"+p;
-       else
-          p="1"+p;
-       uc=uc>>1;   
-    }
-    p = zeros.substr(0, 8-p.size()) + p; //pad 0s to left if needed
-    s+= p; 
-    count++;
-  } 
-  myfile2.close();
-
-  //if we wrote this file than the first 8 bits are the flag that tell us how much padding there is
-  int flag = binaryString2Int(s.substr(0,8));
-  //remove flag and padding
-  s = s.substr(8+flag);
-  return s;
-}
-
-int getBitLengthForValue(int val){
-  int bits;
-  for (bits = 0; val > 0; val >>= 1){
-    bits++;
-  }
-  return bits;
-}
-
-// Decompress a list of output ks to a string.
-// "begin" and "end" must form a valid range of ints
-std::string decompress(std::string file) {
-  int dictSize = 256;
-  std::map<int,std::string> dictionary;
-  for (int i = 0; i < 256; i++)
-    dictionary[i] = std::string(1, i);
-
-  std::string cBits = readBinaryFromFile(file);
-
-  int counter = 0;
-  std::string thisBitString;
-  int currentBitLength = 9;
-  int thisNum;
-  std::string entry;
-  //get the first letter explicitly do it doesn't get added to the dictionanry again
-  std::string w(1, binaryString2Int(cBits.substr(counter, currentBitLength)));
-  std::string result = w;
-  counter += currentBitLength;
-  //std::cout << "1" << std::endl;
-  while (counter < cBits.size()){
-    thisBitString = cBits.substr(counter, currentBitLength);
-    thisNum = binaryString2Int(thisBitString);
-    currentBitLength = getBitLengthForValue(dictSize);
-    //hooray!  we've gotten the next number from the file.
-    //now we can do all the normal LZW stuff with it
-    //std::cout << counter << ", " << currentBitLength << std::endl;
-
-    if (dictionary.count(thisNum))
-      entry = dictionary[thisNum];
-    else if (thisNum == dictSize)
-      entry = w + w[0];
-    else{
-      std::cout << "bad compression!  Exprected: " << dictSize << " found: " << thisNum << std::endl;
-      throw "Bad compressed k";
-    }
-    result += entry;
- 
-    // Add w+entry[0] to the dictionary.
-    dictionary[dictSize++] = w + entry[0];
-    w = entry;
-
-    counter += currentBitLength;    
-  }
-
-  return result;
-} 
 
 std::string int2BinaryString(int c) {
       int val = c;
@@ -178,7 +31,7 @@ std::string int2BinaryString(int c) {
       }
       std::string p = ""; //a binary code string with code length = cl
       while (c>0) {         
-		   if (c%2==0)
+       if (c%2==0)
             p="0"+p;
          else
             p="1"+p;
@@ -286,6 +139,158 @@ std::vector<int> readBinary(std::string file) {
   return convertBinaryToInts(binary);
 }
 
+
+int binaryString2Int(std::string p) {
+   int code = 0;
+   if (p.size()>0) {
+      if (p.at(0)=='1')
+         code = 1;
+      p = p.substr(1);
+      while (p.size()>0) {
+         code = code << 1;
+                   if (p.at(0)=='1')
+            code++;
+         p = p.substr(1);
+      }
+   }
+   return code;
+}
+ 
+std::string readBinaryFromFile(std::string file) { 
+
+  //get whatever is in the file
+  std::ifstream myfile2;
+  myfile2.open (file.c_str(),  std::ios::binary);
+  struct stat filestatus;
+  stat(file.c_str(), &filestatus );
+  long fsize = filestatus.st_size; //get the size of the file in bytes
+  std::string zeros = "00000000";
+  char c2[fsize];
+  myfile2.read(c2, fsize);
+
+  std::string s = "";
+  long count = 0;
+  while(count<fsize) {
+    unsigned char uc =  (unsigned char) c2[count];
+    std::string p = ""; //a binary string
+    for (int j=0; j<8 && uc>0; j++) {         
+     if (uc%2==0)
+          p="0"+p;
+       else
+          p="1"+p;
+       uc=uc>>1;   
+    }
+    p = zeros.substr(0, 8-p.size()) + p; //pad 0s to left if needed
+    s+= p; 
+    count++;
+  } 
+  myfile2.close();
+
+  //if we wrote this file than the first 8 bits are the flag that tell us how much padding there is
+  int flag = binaryString2Int(s.substr(0,8));
+  //remove flag and padding
+  s = s.substr(8+flag);
+  return s;
+}
+
+int getBitLengthForValue(int val){
+  int bits;
+  for (bits = 0; val > 0; val >>= 1){
+    bits++;
+  }
+  return bits;
+}
+
+template <typename Iterator>
+std::string compress(std::string file) {
+  std::string output = "";
+
+  std::string uncompressed;
+  std::ifstream reader(file);
+  uncompressed = readData(reader);
+  reader.close();
+
+  // Build the dictionary.
+  int dictSize = 256;
+  std::map<std::string,int> dictionary;
+  for (int i = 0; i < 256; i++)
+    dictionary[std::string(1, i)] = i;
+ 
+  std::string w;
+  for (std::string::const_iterator it = uncompressed.begin();
+       it != uncompressed.end(); ++it) {
+    char c = *it;
+    std::string wc = w + c;
+    if (dictionary.count(wc))
+      w = wc;
+    else {
+      //*result++ = dictionary[w];
+
+      //this makes sure that even if the value is less than the current bit size it correctly left pads
+      output += int2BinaryString(dictionary[w], getBitLengthForValue(dictSize));
+      // Add wc to the dictionary.
+//  if (dictSize < 512){
+      dictionary[wc] = dictSize++;
+//  }
+      
+      w = std::string(1, c);
+    }
+  }
+ 
+  // Output the code for w.
+  if (!w.empty())
+    output += int2BinaryString(dictionary[w], getBitLengthForValue(dictSize));
+  return output;
+}
+
+// Decompress a list of output ks to a string.
+// "begin" and "end" must form a valid range of ints
+std::string decompress(std::string cbits) {
+  int dictSize = 256;
+  std::map<int,std::string> dictionary;
+  for (int i = 0; i < 256; i++)
+    dictionary[i] = std::string(1, i);
+
+
+  int counter = 0;
+  std::string thisBitString;
+  int currentBitLength = 9;
+  int thisNum;
+  std::string entry;
+  //get the first letter explicitly do it doesn't get added to the dictionanry again
+  std::string w(1, binaryString2Int(cBits.substr(counter, currentBitLength)));
+  std::string result = w;
+  counter += currentBitLength;
+  //std::cout << "1" << std::endl;
+  while (counter < cBits.size()){
+    thisBitString = cBits.substr(counter, currentBitLength);
+    thisNum = binaryString2Int(thisBitString);
+    currentBitLength = getBitLengthForValue(dictSize);
+    //hooray!  we've gotten the next number from the file.
+    //now we can do all the normal LZW stuff with it
+    //std::cout << counter << ", " << currentBitLength << std::endl;
+
+    if (dictionary.count(thisNum))
+      entry = dictionary[thisNum];
+    else if (thisNum == dictSize)
+      entry = w + w[0];
+    else{
+      std::cout << "bad compression!  Exprected: " << dictSize << " found: " << thisNum << std::endl;
+      throw "Bad compressed k";
+    }
+    result += entry;
+ 
+    // Add w+entry[0] to the dictionary.
+    dictionary[dictSize++] = w + entry[0];
+    w = entry;
+
+    counter += currentBitLength;    
+  }
+
+  return result;
+} 
+
+
 void binaryIOTest(std::string file, std::vector<int> data){
   printBinary(file + "test", data);
 
@@ -369,11 +374,11 @@ int main(int argn, char *args[]) {
   std::vector<int> compressed;
 
   if (*args[1] == 'c'){
-    compress(file, std::back_inserter(compressed));
-    //copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
-    printBinary(file + ".lzw", compressed);
+    std::string data compress(file);
+    writeBinaryToFile(file + ".lzw", data);
   } else if (*args[1] == 'd'){    
-    std::string decompressed = decompress(file);
+    std::string data = readBinaryFromFile(file);
+    std::string decompressed = decompress(data);
     printPlainText(file, decompressed);
   }else if (*args[1] == 't'){
     std::cout << "Testing" << std::endl;
