@@ -45,8 +45,9 @@ Iterator compress(std::string file, Iterator result) {
     else {
       *result++ = dictionary[w];
       // Add wc to the dictionary.
-      
-      dictionary[wc] = dictSize++;
+//      if (dictSize < 512){
+        dictionary[wc] = dictSize++;
+  //    }
       
       w = std::string(1, c);
     }
@@ -56,6 +57,23 @@ Iterator compress(std::string file, Iterator result) {
   if (!w.empty())
     *result++ = dictionary[w];
   return result;
+}
+
+
+int binaryString2Int(std::string p) {
+   int code = 0;
+   if (p.size()>0) {
+      if (p.at(0)=='1')
+         code = 1;
+      p = p.substr(1);
+      while (p.size()>0) {
+         code = code << 1;
+                   if (p.at(0)=='1')
+            code++;
+         p = p.substr(1);
+      }
+   }
+   return code;
 }
  
 std::string readBinaryFromFile(std::string file) {
@@ -97,10 +115,11 @@ std::string readBinaryFromFile(std::string file) {
 }
 
 int getBitLengthForValue(int val){
-  for (cl = 0; val > 0; val >>= 1){
-    cl++;
+  int bits;
+  for (bits = 0; val > 0; val >>= 1){
+    bits++;
   }
-  return cl;
+  return bits;
 }
 
 // Decompress a list of output ks to a string.
@@ -122,26 +141,27 @@ std::string decompress(std::string file) {
   std::string w(1, binaryString2Int(cBits.substr(counter, currentBitLength)));
   std::string result = w;
   counter += currentBitLength;
-
-  while (counter < strlen(cBits)){
-    currentBitLength = getBitLengthForValue(dictSize);
+  //std::cout << "1" << std::endl;
+  while (counter < cBits.size()){
     thisBitString = cBits.substr(counter, currentBitLength);
     thisNum = binaryString2Int(thisBitString);
+    currentBitLength = getBitLengthForValue(dictSize);
     //hooray!  we've gotten the next number from the file.
     //now we can do all the normal LZW stuff with it
+    //std::cout << counter << ", " << currentBitLength << std::endl;
 
-    if (dictionary.count(k))
+    if (dictionary.count(thisNum))
       entry = dictionary[thisNum];
     else if (thisNum == dictSize)
       entry = w + w[0];
-    else
+    else{
+      std::cout << "bad compression!  Exprected: " << dictSize << " found: " << thisNum << std::endl;
       throw "Bad compressed k";
- 
+    }
     result += entry;
  
     // Add w+entry[0] to the dictionary.
     dictionary[dictSize++] = w + entry[0];
- 
     w = entry;
 
     counter += currentBitLength;    
@@ -199,21 +219,6 @@ std::string int2BinaryString(int c, int cl) {
 }
 
 
-int binaryString2Int(std::string p) {
-   int code = 0;
-   if (p.size()>0) {
-      if (p.at(0)=='1') 
-         code = 1;
-      p = p.substr(1);
-      while (p.size()>0) { 
-         code = code << 1; 
-		   if (p.at(0)=='1')
-            code++;
-         p = p.substr(1);
-      }
-   }
-   return code;
-}
 
 void printPlainText(std::string filename, std::string text){
   std::string newFileName = filename.substr(0, filename.length()-4) + "2";
@@ -281,7 +286,7 @@ std::vector<int> readBinary(std::string file) {
   return convertBinaryToInts(binary);
 }
 
-bool binaryIOTest(std::string file, std::vector<int> data){
+void binaryIOTest(std::string file, std::vector<int> data){
   printBinary(file + "test", data);
 
   std::vector<int> result = readBinary(file + "test");
@@ -292,7 +297,11 @@ bool binaryIOTest(std::string file, std::vector<int> data){
       std::cout << counter << "/" << data.size() << "/" << result.size() << std::endl;
       for (int counter2 = counter -5; counter2 < counter + 5; counter2++){
         if (counter2 > 0) {
-        std::cout << "does " << data[counter2] << " == " << result[counter2] << std::endl;
+          std::cout << "does " << data[counter2] << " == " << result[counter2];
+          if (counter2 == counter) {
+            std::cout << " <--";
+          }
+          std::cout << std::endl;
         }
       }
       break;
@@ -311,6 +320,7 @@ bool binaryIOTest(std::string file, std::vector<int> data){
   if (result == data){
     std::cout << "100% match" << std::endl;
     std::cout << "lengths: "  << data.size() << " , " << result.size()<< std::endl;
+    //copy(result.begin(), result.end(), std::ostream_iterator<int>(std::cout, ", "));
   }
 }
 
@@ -321,8 +331,11 @@ bool binaryConversionTest(){
 }
 
 bool integerListConversionTest(){
-  const int arr[] = {16,2,77,29,0,300,500};
-  std::vector<int> vec (arr, arr + sizeof(arr) / sizeof(arr[0]) );
+  std::vector<int> vec;
+
+  for (int counter = 0; counter < 1025; counter++){
+    vec.push_back(counter);
+  }
 
   //std::cout << convertIntsToBinary(vec) << std::endl;
   //std::cout << convertBinaryToInts(convertIntsToBinary(vec)) << std::endl;
@@ -357,6 +370,7 @@ int main(int argn, char *args[]) {
 
   if (*args[1] == 'c'){
     compress(file, std::back_inserter(compressed));
+    //copy(compressed.begin(), compressed.end(), std::ostream_iterator<int>(std::cout, ", "));
     printBinary(file + ".lzw", compressed);
   } else if (*args[1] == 'd'){    
     std::string decompressed = decompress(file);
