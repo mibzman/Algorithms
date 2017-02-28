@@ -126,66 +126,23 @@ int binaryString2Int(std::string p) {
    return code;
 }
 
-std::vector<int> readBinary(std::string file) {   
-  //reading from a file
-  std::ifstream myfile2;
-  myfile2.open (file.c_str(),  std::ios::binary);
-  struct stat filestatus;
-  stat(file.c_str(), &filestatus );
-  long fsize = filestatus.st_size; //get the size of the file in bytes
-  std::string zeros = "000000000";
-  char c2[fsize];
-  myfile2.read(c2, fsize);
-
-  std::string s = "";
-  long count = 0;
-  while(count<fsize) {
-    unsigned char uc =  (unsigned char) c2[count];
-    std::string p = ""; //a binary string
-    for (int j=0; j<8 && uc>0; j++) {         
-     if (uc%2==0)
-          p="0"+p;
-       else
-          p="1"+p;
-       uc=uc>>1;   
-    }
-    p = zeros.substr(0, 8-p.size()) + p; //pad 0s to left if needed
-    s+= p; 
-    count++;
-  } 
-  myfile2.close();
-
-  //iterate through all the bits 8 at a time
-  std::vector<int> output;
-  int counter = 0;
-  while (counter <= s.length()){
-    output.push_back(binaryString2Int(s.substr(counter, 9)));
-    counter += 9;
-  }
-
-
-  //scrub trailing newlines
-  counter = output.size() -1;
-  while (output[counter] == 0){
-    output.pop_back();
-    counter--;
-  }
-  return output;
+void printPlainText(std::string filename, std::string text){
+  std::string newFileName = filename.substr(0, filename.length()-4) + "2";
+  std::ofstream outputFile(newFileName);
+  outputFile << text;
 }
 
-void printBinary(std::string file, std::vector<int> compressed){
-    int c = 69;
-   int bits = 9;
-   std::string p = int2BinaryString(c);
-   
-   std::string bcode= "";
+std::string convertIntsToBinary(std::vector<int> nums){
+  std::string bcode= "";
    for (std::vector<int>::iterator it = compressed.begin() ; it != compressed.end(); ++it) {
       p = int2BinaryString(*it);
       bcode+=p;
    }
-   
-   //writing to file
-   std::ofstream myfile;
+   return bcode;
+}
+
+void writeBinaryToFile(std::string file, std::string binary){
+  std::ofstream myfile;
    myfile.open(file.c_str(),  std::ios::binary);
    
    std::string zeros = "00000000";
@@ -206,12 +163,62 @@ void printBinary(std::string file, std::vector<int> compressed){
    myfile.close();
 }
 
-void printPlainText(std::string filename, std::string text){
-  std::string newFileName = filename.substr(0, filename.length()-4) + "2";
-  std::ofstream outputFile(newFileName);
-  outputFile << text;
+void printBinary(std::string file, std::vector<int> compressed){
+  std::string binary = convertIntsToBinary(compressed);
+  writeBinaryToFile(file, binary);
 }
 
+std::string readBinaryFromFile(std::string file) {
+  std::ifstream myfile2;
+  myfile2.open (file.c_str(),  std::ios::binary);
+  struct stat filestatus;
+  stat(file.c_str(), &filestatus );
+  long fsize = filestatus.st_size; //get the size of the file in bytes
+  std::string zeros = "00000000";
+  char c2[fsize];
+  myfile2.read(c2, fsize);
+
+  std::string s = "";
+  long count = 0;
+  while(count<fsize) {
+    unsigned char uc =  (unsigned char) c2[count];
+    std::string p = ""; //a binary string
+    for (int j=0; j<8 && uc>0; j++) {         
+     if (uc%2==0)
+          p="0"+p;
+       else
+          p="1"+p;
+       uc=uc>>1;   
+    }
+    p = zeros.substr(0, 8-p.size()) + p; //pad 0s to left if needed
+    s+= p; 
+    count++;
+  } 
+  myfile2.close();
+  return s;
+}
+
+std::vector<int> convertBinaryToInts(std::string binary){
+   std::vector<int> output;
+  int counter = 0;
+  while (counter <= s.length()){
+    output.push_back(binaryString2Int(s.substr(counter, 9)));
+    counter += 9;
+  }
+
+  //scrub trailing newlines
+  counter = output.size() -1;
+  while (output[counter] == 0){
+    output.pop_back();
+    counter--;
+  }
+  return output;
+}
+
+std::vector<int> readBinary(std::string file) {
+  std::string binary = readBinaryFromFile(file);
+  return convertBinaryToInts(binary);
+}
 
 bool binaryIOTest(std::string file, std::vector<int> data){
   printBinary(file + "test", data);
@@ -248,6 +255,29 @@ bool binaryConversionTest(){
   int result = binaryString2Int(threeHundred);
   return 300 == result;
 }
+
+bool integerListConversionTest(){
+  const int arr[] = {16,2,77,29,0,300,500};
+  vector<int> vec (arr, arr + sizeof(arr) / sizeof(arr[0]) );
+
+  return vec == convertBinaryToInts(convertIntsToBinary(vec));
+}
+
+bool readWriteIrregularBinaryTest(){
+  std::string data = "1100110010101"; //a non-8bit binary string
+
+  writeBinaryToFile("wowWhatAGoodFilename2", data);
+
+  return data == readBinaryFromFile("wowWhatAGoodFilename2");
+}
+
+bool readWriteBinaryTest(){
+  std::string data = "1010101010101010"; 
+
+  writeBinaryToFile("wowWhatAGoodFilename", data);
+
+  return data == readBinaryFromFile("wowWhatAGoodFilename");
+}
  
 int main(int argn, char *args[]) {
   assert("Bad arguments.  Flags should be wither v or s" && argn == 3);
@@ -272,7 +302,10 @@ int main(int argn, char *args[]) {
     std::cout << "Testing" << std::endl;
     compress(file, std::back_inserter(compressed));
     std::cout << binaryConversionTest()  << std::endl;
-    std::cout << binaryIOTest(file, compressed) << std::endl;
+    std::cout << integerListConversionTest()  << std::endl;
+    std::cout << readWriteIrregularBinaryTest()  << std::endl;
+    std::cout << readWriteBinaryTest()  << std::endl;
+    //std::cout << binaryIOTest(file, compressed) << std::endl;
   }else{
     std::cout << "wrong flags.  Please enter either c or d followed by the file" << std::endl;
     return 1;
