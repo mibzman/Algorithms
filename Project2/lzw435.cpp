@@ -9,6 +9,12 @@
 
 #include <sstream>
 
+/*sam borick's (sb205) lzw implementation.
+This program will compress and decompress files using the LZW algorithm
+NOTE:  My implementation will almost certiantly not be able to decompress files compressed by another LZW implementation,
+due to issues with bit lengths
+*/
+
 
 std::string readData(std::ifstream& reader){
 	std::stringstream buffer;
@@ -77,8 +83,10 @@ std::string decompress(Iterator begin, Iterator end) {
     result += entry;
  
     // Add w+entry[0] to the dictionary.
-    dictionary[dictSize++] = w + entry[0];
     
+    if (dictSize < 512){
+      dictionary[dictSize++] = w + entry[0];
+    }    
  
     w = entry;
   }
@@ -281,7 +289,10 @@ bool binaryIOTest(std::string file, std::vector<int> data){
     std::cout << "last output val: " << result[result.size() - 2] << std::endl;
   }
   std::cout << "over 512: " << overageCounter << std::endl;
-  return result == data;
+  if (result == data){
+    std::cout << "100% match" << std::endl;
+    std::cout << "lengths: "  << data.size() << " , " << result.size()<< std::endl;
+  }
 }
 
 bool binaryConversionTest(){
@@ -342,7 +353,7 @@ int main(int argn, char *args[]) {
     std::cout << "intlist: " << integerListConversionTest()  << std::endl;
     std::cout << "irregular: " << readWriteIrregularBinaryTest()  << std::endl;
     std::cout << "regular: " << readWriteBinaryTest()  << std::endl;
-    //std::cout << binaryIOTest(file, compressed) << std::endl;
+    binaryIOTest(file, compressed);
   }else{
     std::cout << "wrong flags.  Please enter either c or d followed by the file" << std::endl;
     return 1;
