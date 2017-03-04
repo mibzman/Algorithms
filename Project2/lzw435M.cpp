@@ -30,7 +30,6 @@ int getBitLengthForValue(int val){
 }
 
 std::string int2BinaryString(int c) {
-      int val = c;
       int cl = 9;
       if (c >= 512){
         cl = getBitLengthForValue(c);        
@@ -45,7 +44,7 @@ std::string int2BinaryString(int c) {
       }
       int zeros = cl-p.size();
       if (zeros<0) {
-         //std::cout << "\nWarning: Overflow. code is too big to be coded by " << cl <<" bits!\n";
+         std::cout << "\nWarning: Overflow. code is too big to be coded by " << cl <<" bits!\n";
          p = p.substr(p.size()-cl);
       }
       else {
@@ -226,7 +225,11 @@ std::string compress(std::string file) {
       //*result++ = dictionary[w];
       //dictionary[wc] = dictSize++;
       //this makes sure that even if the value is less than the current bit size it correctly left pads
-      output += int2BinaryString(dictionary[wc], getBitLengthForValue(dictSize));
+      //if (dictSize == 673) {
+        //std::cout << "wow";
+      //}
+      //std::cout << wc << std::endl;
+      output += int2BinaryString(dictionary[w], getBitLengthForValue(dictSize));
       // Add wc to the dictionary.
       if (dictSize < 65536){
         dictionary[wc] = dictSize++;
@@ -239,6 +242,17 @@ std::string compress(std::string file) {
   // Output the code for w.
   if (!w.empty())
     output += int2BinaryString(dictionary[w], getBitLengthForValue(dictSize));
+
+  //dump dictionary
+  std::map<int,std::string> dict2;
+
+  for (auto iterator = dictionary.begin(); iterator != dictionary.end(); ++iterator){
+    dict2[iterator->second] = iterator->first;
+  }
+
+  for (auto iterator = dict2.begin(); iterator != dict2.end(); ++iterator){
+     std::cout << iterator->second << ":" << iterator->first << std::endl;
+  }
   return output;
 }
 
@@ -267,16 +281,15 @@ std::string decompress(std::string cBits) {
     //currentBitLength = getBitLengthForValue(dictSize);
     thisBitString = cBits.substr(counter, currentBitLength);
     thisNum = binaryString2Int(thisBitString);
-    currentBitLength = getBitLengthForValue(dictSize);
+    //currentBitLength = getBitLengthForValue(dictSize);
     //hooray!  we've gotten the next number from the file.
     //now we can do all the normal LZW stuff with it
     //std::cout << counter << ", " << currentBitLength << std::endl;
-
-    if (dictionary.count(thisNum))
+    if (dictionary.count(thisNum)){
       entry = dictionary[thisNum];
-    else if (thisNum == dictSize)
+    }else if (thisNum == dictSize){
       entry = w + w[0];
-    else{
+    }else{
       std::cout << "bad compression!  Exprected: " << dictSize << " found: " << thisNum << std::endl;
       std::cout << "words read: " << 256 + wordCounter << std::endl;
       std::cout << "this word: " << thisBitString << std::endl;
@@ -284,13 +297,22 @@ std::string decompress(std::string cBits) {
       throw "Bad compressed k";
     }
     result += entry;
-//    std::cout << "result: " << result << std::endl;
+    //std::cout << "result: " << result << std::endl;
  
     // Add w+entry[0] to the dictionary.
-    dictionary[dictSize++] = w + entry[0];
-    w = entry;
+    //dictionary[dictSize++] = w + entry[0];
+    //w = entry;
+    if (dictSize < 65536){
+      dictionary[dictSize++] = w + entry[0];
+      currentBitLength = getBitLengthForValue(dictSize);
+    }
 
-    counter += currentBitLength;    
+    w = entry;
+    counter += currentBitLength;
+  }
+
+  for (auto iterator = dictionary.begin(); iterator != dictionary.end(); ++iterator){
+     std::cout << iterator->second << ":" << iterator->first << std::endl;
   }
 
   return result;
@@ -339,7 +361,7 @@ bool binaryConversionTest(){
   std::string threeHundred = int2BinaryString(400, 10);
   std::cout << threeHundred << std::endl;
   int result = binaryString2Int(threeHundred);
-  return 300 == result;
+  return 400 == result;
 }
 
 bool integerListConversionTest(){
@@ -386,7 +408,7 @@ int main(int argn, char *args[]) {
   } else if (*args[1] == 'd'){    
     std::string data = readBinaryFromFile(file);
     std::string decompressed = decompress(data);
-    std::cout << decompressed << std::endl;
+    //std::cout << decompressed << std::endl;
     printPlainText(file, decompressed);
   }else if (*args[1] == 't'){
     std::cout << "Testing" << std::endl;
