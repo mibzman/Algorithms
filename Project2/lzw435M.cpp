@@ -279,7 +279,6 @@ std::string decompress(std::string cBits) {
       entry = w + w[0];
     }else{
       std::cout << "bad compression!  Exprected: " << dictSize << " found: " << thisNum << std::endl;
-      std::cout << "words read: " << 256 + wordCounter << std::endl;
       std::cout << "this word: " << thisBitString << std::endl;
 
       throw "Bad compressed k";
