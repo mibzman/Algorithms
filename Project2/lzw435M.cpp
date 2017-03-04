@@ -222,13 +222,6 @@ std::string compress(std::string file) {
     if (dictionary.count(wc))
       w = wc;
     else {
-      //*result++ = dictionary[w];
-      //dictionary[wc] = dictSize++;
-      //this makes sure that even if the value is less than the current bit size it correctly left pads
-      //if (dictSize == 673) {
-        //std::cout << "wow";
-      //}
-      //std::cout << wc << std::endl;
       output += int2BinaryString(dictionary[w], getBitLengthForValue(dictSize));
       // Add wc to the dictionary.
       if (dictSize < 65536){
@@ -244,6 +237,7 @@ std::string compress(std::string file) {
     output += int2BinaryString(dictionary[w], getBitLengthForValue(dictSize));
 
   //dump dictionary
+  /*
   std::map<int,std::string> dict2;
 
   for (auto iterator = dictionary.begin(); iterator != dictionary.end(); ++iterator){
@@ -252,7 +246,7 @@ std::string compress(std::string file) {
 
   for (auto iterator = dict2.begin(); iterator != dict2.end(); ++iterator){
      std::cout << iterator->second << ":" << iterator->first << std::endl;
-  }
+  } */
   return output;
 }
 
@@ -264,7 +258,6 @@ std::string decompress(std::string cBits) {
   for (int i = 0; i < 256; i++)
     dictionary[i] = std::string(1, i);
 
-
   int counter = 0;
   std::string thisBitString;
   int currentBitLength = 9;
@@ -274,17 +267,12 @@ std::string decompress(std::string cBits) {
   std::string w(1, binaryString2Int(cBits.substr(counter, currentBitLength)));
   std::string result = w;
   counter += currentBitLength;
-  int wordCounter = 0;
-  //std::cout << "1" << std::endl;
   while (counter < cBits.size()){
-    wordCounter++;
-    //currentBitLength = getBitLengthForValue(dictSize);
     thisBitString = cBits.substr(counter, currentBitLength);
     thisNum = binaryString2Int(thisBitString);
-    //currentBitLength = getBitLengthForValue(dictSize);
     //hooray!  we've gotten the next number from the file.
     //now we can do all the normal LZW stuff with it
-    //std::cout << counter << ", " << currentBitLength << std::endl;
+
     if (dictionary.count(thisNum)){
       entry = dictionary[thisNum];
     }else if (thisNum == dictSize){
@@ -297,11 +285,7 @@ std::string decompress(std::string cBits) {
       throw "Bad compressed k";
     }
     result += entry;
-    //std::cout << "result: " << result << std::endl;
- 
-    // Add w+entry[0] to the dictionary.
-    //dictionary[dictSize++] = w + entry[0];
-    //w = entry;
+
     if (dictSize < 65536){
       dictionary[dictSize++] = w + entry[0];
       currentBitLength = getBitLengthForValue(dictSize);
@@ -311,9 +295,10 @@ std::string decompress(std::string cBits) {
     counter += currentBitLength;
   }
 
+  /*
   for (auto iterator = dictionary.begin(); iterator != dictionary.end(); ++iterator){
      std::cout << iterator->second << ":" << iterator->first << std::endl;
-  }
+  }*/
 
   return result;
 } 
