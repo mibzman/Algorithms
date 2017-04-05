@@ -66,7 +66,7 @@ struct ImageCarver{
   }
 
   void GetImageFromFile(std::string Filename){
-    Image = new std::vector<std::vector<int>>;
+    //Image = new std::vector<std::vector<int>>;
     std::string TempString;
     std::ifstream Stream;
     int Counter = 1;
@@ -100,12 +100,12 @@ struct ImageCarver{
         Counter++;
       }
       else if(Counter == 3){
-          MaxGray = TempString;
+          MaxGray = std::stoi(TempString);
           Counter++;
       }
       else{
         std::string Num = "";
-        for(int i = 0; i < TempString.length(); i++){
+        for(int i = 0; i < (int)TempString.size(); i++){
           if(TempString[i] == ' ' || TempString[i] == '\t' || TempString[i] == '\n'){
             Temp.push_back(Num);
             Num = "";
@@ -113,21 +113,21 @@ struct ImageCarver{
           else Num += TempString[i];
         }
         if(Num != "") {
-          Temp.push_back(Num)
+          Temp.push_back(Num);
         };
       }
     }
 
     Stream.close();
 
-    if (Height * Width != Temp.length()){
+    if (Height * Width != (int)Temp.size()){
       std::cout << "Invalid file!"<< std::endl;
       return;
     }
 
     int TempPos = 0;
     for(int y = 0; y < Height; y++){
-      std::vector<int> TempVec = new std::vector<int>;
+      std::vector<int> TempVec;
       for(int x = 0; x < Width; x++){
         TempVec.push_back(atoi(Temp[TempPos].c_str()));
         TempPos++;
@@ -169,7 +169,7 @@ struct ImageCarver{
     }
   }
 
-  void MarkSeamInImage(){
+  void MarkVerticalSeam(){
     int Pos = 0;
 
     for(int i = 0; i < Width; i++){
@@ -180,7 +180,7 @@ struct ImageCarver{
 
     Image[Pos][Height-1] = -1;
 
-    for(int Current = Height -1; i >= 0; Current--){
+    for(int Current = Height -1; Current >= 0; Current--){
       int Right = Pos + 1;
       int Left = Pos - 1;
 
@@ -194,30 +194,26 @@ struct ImageCarver{
       int Min = ThreeMin(CEnergyMatrix[Right][Current],
           CEnergyMatrix[Left][Current],
           CEnergyMatrix[Pos][Current]);
-
-      switch (Min){
-        case CEnergyMatrix[Left][Current]:
-          Pos = Left;
-          break;
-        case CEnergyMatrix[Pos][Current]:
-          Pos = Pos;
-          break;
-        case CEnergyMatrix[Right][Current]:
-          Pos = Right;
-          break;
+      
+      std::cout << Min << std::endl;
+      if (Min == CEnergyMatrix[Left][Current]){
+        Pos = Left;
+      }else if (Min == CEnergyMatrix[Pos][Current]){
+        Pos = Pos;
+      }else if (Min == CEnergyMatrix[Right][Current]){
+        Pos = Right;
       }
-
       Image[Pos][Current] = -1;
     }
   }
 
-  void RemoveSeamFromImage(){
+  void RemoveVerticalSeam(){
     int OldWidth = Width;
     Width--;
-    NewImage = new std::vector<std::vector<int>>;
+    std::vector<std::vector<int>> NewImage;
 
     for(int y = 0; y < Height; y++){
-      std::vector<int> TempVec = new std::vector<int>;
+      std::vector<int> TempVec;
       for(int x = 0; x < OldWidth; x++){        
         if(Image[x][y] != -1){
           TempVec.push_back(Image[x][y]);
@@ -227,27 +223,71 @@ struct ImageCarver{
     }
   }
 
-  void CarveVerticalSeam()
-  {
+  void CarveVerticalSeam(){
     PopulateCumulativeEnergy();
-    MarkSeamInImage();
-    RemoveSeamFromImage();
+    MarkVerticalSeam();
+    RemoveVerticalSeam();
   }
-}
+
+  void RotateImageRight(){
+    std::vector<std::vector<int>> Temp;
+    for(int i=0; i< Width; i++) {
+      for(int j=0; j< Height; j++) {
+          Temp[i][j] = Image[Height-1-j][i];
+      }
+    }
+    Image = Temp;
+  }
+
+  void RotateImageLeft(){
+    //TODO: do this correctly
+    RotateImageRight();
+    RotateImageRight();
+    RotateImageRight();
+  }
+
+  void Carve(int VerticalSeams, int HorizontalSeams){
+    for (int Counter = 0; Counter < VerticalSeams; Counter++){
+      CarveVerticalSeam();
+    }
+
+    RotateImageRight();
+    for (int Counter = 0; Counter < HorizontalSeams; Counter++){    
+      CarveVerticalSeam();
+    }
+    RotateImageLeft();
+  }
+
+  void PrintImage(){
+    std::ofstream OutputFile("image_processed.pgm"); //create output file
+
+    OutputFile << "P2" << std::endl
+                << Width << " " << Height << std::endl
+                << MaxGray << std::endl;
+
+    for(int y = 0; y < Height; y++)
+    {
+      for(int x = 0; x < Width; x++)
+        OutputFile << Image[x][y] << " " << std::endl;
+    }
+
+    OutputFile.close();
+  }
+};
+
+
 
 int main(int argc, char *argv[])
 {
-    assert(argc == 4);
-
     std::string filename = argv[1];
 
-    int vert = atoi(argv[2]);
-    int horz = atoi(argv[3]);
+    int VerticalSeams = atoi(argv[2]);
+    int HorizontalSeams = atoi(argv[3]);
 
     ImageCarver Image(filename);
 
-    Image.carve(vert, horz);
-    Image.outputimage();
+    Image.Carve(VerticalSeams, HorizontalSeams);
+    Image.PrintImage();
 
     return 0;
 }
