@@ -16,8 +16,9 @@ struct ImageCarver{
 
   ImageCarver(std::string Filename){
     GetImageFromFile(Filename);
-    UpdateEnergyMatrix();
   }
+
+  ImageCarver() = default;
 
   int GetEnergy(int x, int y){
     int Current = Image[x][y];
@@ -35,13 +36,13 @@ struct ImageCarver{
       Above = Image[x][y-1];
     }
 
-    if(x == Width - 1){
+    if(x == Height - 1){
       Right = Image[x][y];
     }else{
       Right = Image[x+1][y];
     }
 
-    if(y == Height - 1){
+    if(y == Width - 1){
       Below = Image[x][y];
     }
     else{
@@ -56,13 +57,16 @@ struct ImageCarver{
     return result;
   }
 
-  void UpdateEnergyMatrix(){
-    EnergyMatrix = Image; //this gives us a 2-D array of the correct size to use
-    for(int y = 0; y < Height; y++){
-      for(int x = 0; x < Width; x++){
-        EnergyMatrix[x][y] = GetEnergy(x,y);
+void UpdateEnergyMatrix(){
+    std::vector<std::vector<int>> ThisEnergyMatrix;
+    for(int x = 0; x < Width; x++){
+      std::vector<int> TempVec;
+      for(int y = 0; y < Height; y++){
+        TempVec.push_back(GetEnergy(x,y));
       }
-    }        
+      ThisEnergyMatrix.push_back(TempVec);
+    }
+    EnergyMatrix = ThisEnergyMatrix;
   }
 
   void GetImageFromFile(std::string Filename){
@@ -141,9 +145,9 @@ struct ImageCarver{
   }
 
   void PopulateCumulativeEnergy(){
-    CEnergyMatrix = EnergyMatrix; //to get proper sized martix
-    for(int y = 0; y < Height; y++){
-      for(int x = 0; x < Width; x++){
+    CEnergyMatrix = std::vector<std::vector<int>>(EnergyMatrix); //to get proper sized martix
+    for(int x = 0; x < Width; x++){
+      for(int y = 0; y < Height; y++){
         if(y == 0){
           CEnergyMatrix[x][y] = EnergyMatrix[x][y];
         }
@@ -162,8 +166,7 @@ struct ImageCarver{
           {
             MinPrevNeigh = ThreeMin(CEnergyMatrix[x-1][y-1],CEnergyMatrix[x+1][y-1],CEnergyMatrix[x][y-1]);
           }
-          CEnergyMatrix[x][y] = EnergyMatrix[x][y] +
-          MinPrevNeigh;
+          CEnergyMatrix[x][y] = EnergyMatrix[x][y] + MinPrevNeigh;
         }
       }
     }
@@ -171,19 +174,17 @@ struct ImageCarver{
 
   void MarkVerticalSeam(){
     int Pos = 0;
-
+    CEnergyMatrix = EnergyMatrix; //steal size
     for(int i = 0; i < Width; i++){
       if(CEnergyMatrix[i][Height-1] < CEnergyMatrix[Pos][Height-1]){
         Pos = i;
       }
     }
-
-    Image[Pos][Height-1] = -1;
+    Image[Height-1][Pos] = -1;
 
     for(int Current = Height -1; Current >= 0; Current--){
       int Right = Pos + 1;
       int Left = Pos - 1;
-
       if(Right < 0 || Right >= Width){
         Right = Pos;
       }
@@ -195,7 +196,6 @@ struct ImageCarver{
           CEnergyMatrix[Left][Current],
           CEnergyMatrix[Pos][Current]);
       
-      std::cout << Min << std::endl;
       if (Min == CEnergyMatrix[Left][Current]){
         Pos = Left;
       }else if (Min == CEnergyMatrix[Pos][Current]){
@@ -203,27 +203,31 @@ struct ImageCarver{
       }else if (Min == CEnergyMatrix[Right][Current]){
         Pos = Right;
       }
-      Image[Pos][Current] = -1;
+
+      Image[Current][Pos] = -1;
     }
   }
 
   void RemoveVerticalSeam(){
-    int OldWidth = Width;
-    Width--;
+    //int OldHeigt = Height;
+    
     std::vector<std::vector<int>> NewImage;
 
-    for(int y = 0; y < Height; y++){
+    for(int x = 0; x < Height; x++){
       std::vector<int> TempVec;
-      for(int x = 0; x < OldWidth; x++){        
+      for(int y = 0; y < Width; y++){
         if(Image[x][y] != -1){
-          TempVec.push_back(Image[x][y]);
+           TempVec.push_back(Image[x][y]);
         }
       }
       NewImage.push_back(TempVec);
     }
+    Width--;
+    Image = NewImage;
   }
 
   void CarveVerticalSeam(){
+    UpdateEnergyMatrix();
     PopulateCumulativeEnergy();
     MarkVerticalSeam();
     RemoveVerticalSeam();
@@ -231,11 +235,16 @@ struct ImageCarver{
 
   void RotateImageRight(){
     std::vector<std::vector<int>> Temp;
-    for(int i=0; i< Width; i++) {
-      for(int j=0; j< Height; j++) {
-          Temp[i][j] = Image[Height-1-j][i];
+    for (int InverseX = Width -1; InverseX >= 0; InverseX--){
+      std::vector<int> Temp2;
+      for (int InverseY = Height -1; InverseY >= 0; InverseY--) {
+        Temp2.push_back(Image[InverseY][InverseX]);
       }
+      Temp.push_back(Temp2);
     }
+
+    std::swap(Height, Width);
+
     Image = Temp;
   }
 
@@ -258,17 +267,19 @@ struct ImageCarver{
     RotateImageLeft();
   }
 
-  void PrintImage(){
-    std::ofstream OutputFile("image_processed.pgm"); //create output file
+  void PrintImage(std::string filename){
+    std::ofstream OutputFile(filename.substr(0,filename.size()-4) + "_processed.pgm"); //create output file
 
     OutputFile << "P2" << std::endl
                 << Width << " " << Height << std::endl
                 << MaxGray << std::endl;
 
-    for(int y = 0; y < Height; y++)
+    for(int x = 0; x < Height; x++)
     {
-      for(int x = 0; x < Width; x++)
-        OutputFile << Image[x][y] << " " << std::endl;
+      for(int y = 0; y < Width; y++){
+        OutputFile << Image[x][y] << " ";// << std::endl;
+      }
+      OutputFile << std::endl;
     }
 
     OutputFile.close();
@@ -279,15 +290,16 @@ struct ImageCarver{
 
 int main(int argc, char *argv[])
 {
-    std::string filename = argv[1];
+   assert(argc == 4);
 
-    int VerticalSeams = atoi(argv[2]);
-    int HorizontalSeams = atoi(argv[3]);
+  std::string filename = argv[1];
+  int VerticalSeams = atoi(argv[2]);
+  int HorizontalSeams = atoi(argv[3]);
 
-    ImageCarver Image(filename);
+  ImageCarver Image(filename);
 
-    Image.Carve(VerticalSeams, HorizontalSeams);
-    Image.PrintImage();
+  Image.Carve(VerticalSeams, HorizontalSeams);
+  Image.PrintImage(filename);
 
-    return 0;
+  return 0;
 }
