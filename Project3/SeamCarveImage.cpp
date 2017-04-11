@@ -4,9 +4,7 @@
 #include <string>
 #include <vector>
 #include <cassert>
-/*5: C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/stl_vector.h:1147:7: note: candidate: std::vector<_Tp, _Alloc>::iterator std::vector<_Tp, _Alloc>::erase(std::vector<_Tp, _Alloc>::const_iterator) [with _Tp = int; _Alloc = std::allocator<int>; std::vector<_Tp, _Alloc>::iterator = __gnu_cxx::__normal_iterator<int*, std::vector<int> >; typename std::_Vector_base<_Tp, _Alloc>::pointer = int*; std::vector<_Tp, _Alloc>::const_iterator = __gnu_cxx::__normal_iterator<const int*, std::vector<int> >; typename __gnu_cxx::__alloc_traits<typename std::_Vector_base<_Tp, _Alloc>::_Tp_alloc_type>::const_pointer = const int*] erase(const_iterator __position) ^~~~~ C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/stl_vector.h:1147:7: note: candidate expects 1 argument, 2 provided C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/stl_vector.h:1174:7: note: candidate: std::vector<_Tp, _Alloc>::iterator std::vector<_Tp, _Alloc>::erase(std::vector<_Tp, _Alloc>::const_iterator, std::vector<_Tp, _Alloc>::const_iterator) [with _Tp = int; _Alloc = std::allocator<int>; std::vector<_Tp, _Alloc>::iterator = __gnu_cxx::__normal_iterator<int*, std::vector<int> >; typename std::_Vector_base<_Tp, _Alloc>::pointer = int*; std::vector<_Tp, _Alloc>::const_iterator = __gnu_cxx::__normal_iterator<const int*, std::vector<int> >; typename __gnu_cxx::__alloc_traits<typename std::_Vector_base<_Tp, _Alloc>::_Tp_alloc_type>::const_pointer = const int*] erase(const_iterator __first, const_iterator __last) ^~~~~ C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/stl_vector.h:1174:7: note: no known conversion for argument 1 from '__gnu_cxx::__normal_iterator<std::vector<int>*, std::vector<std::vector<int> > >' to 'std::vector<int>::const_iterator {aka __gnu_cxx::__normal_iterator<const int*, std::vector<int> >}' In file included from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/stl_algobase.h:71:0, from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/char_traits.h:39, from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/ios:40, from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/ostream:38, from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/iostream:39, from*/
 //#include <algorithm>
-/*5: C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/stl_vector.h:1509:5: note: candidate: template<class _Tp, class _Alloc> bool std::operator==(const std::vector<_Tp, _Alloc>&, const std::vector<_Tp, _Alloc>&) operator==(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y) ^~~~~~~~ C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/stl_vector.h:1509:5: note: template argument deduction/substitution failed: In file included from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/stl_algobase.h:71:0, from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/char_traits.h:39, from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/ios:40, from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/ostream:38, from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/iostream:39, from*/
 
 struct ImageCarver{
 
@@ -183,7 +181,7 @@ void UpdateEnergyMatrix(){
         Pos = f;
       }
     }
-    Image[Pos][Height-1] = -1;
+    Image[Height-1][Pos] = -1;
 
     for(int Current = Height -1; Current >= 0; Current--){
       int Right = Pos + 1;
@@ -207,40 +205,40 @@ void UpdateEnergyMatrix(){
       }else if (Min == CEnergyMatrix[Right][Current]){
         Pos = Right;
       }
-      std::cout << "pos: " << Pos << " Current: " << Current << std::endl;
-      Image[Pos][Current] = -1;
+      Image[Current][Pos] = -1;
     }
   }
 
   void RemoveVerticalSeam(){
-    //int OldHeigt = Height;
-    
     std::vector<std::vector<int>> NewImage;
 
     for(int x = 0; x < Height; x++){
       std::vector<int> TempVec;
       for(int y = 0; y < Width; y++){
         if(Image[x][y] != -1){
-           TempVec.push_back(Image[x][y]);
+          //std::cout << x << " " << y << std::endl;
+          TempVec.push_back(Image[x][y]);
         }else {
           //TempVec.push_back(-69);
         }
       }
       NewImage.push_back(TempVec);
-/*229:7: error: 'NewImage' was not declared in this scope NewImage.push_back(TempVec); ^~~~~~~~*/
-      //Image[x].erase(std::remove(Image.begin(), Image.end(), -1), Image.end());
-/*228:78: error: no matching function for call to 'std::vector<int>::erase(__gnu_cxx::__normal_iterator<std::vector<int>*, std::vector<std::vector<int> > >, std::vector<std::vector<int> >::iterator)' Image[x].erase(std::remove(Image.begin(), Image.end(), -1), Image.end()); ^ In file included from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/vector:64:0, from*/
-/*228:64: required from here C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/predefined_ops.h:194:17: error: no match for 'operator==' (operand types are 'std::vector<int>' and 'const int') { return *__it == _M_value; } ~~~~~~^~~~~~~~~~~ In file included from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/stl_algobase.h:67:0, from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/bits/char_traits.h:39, from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/ios:40, from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/ostream:38, from C:/Program Files/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64/lib/gcc/x86_64-w64-mingw32/6.3.0/include/c++/iostream:39, from*/
+      // for( auto iter = Image[x].begin(); iter != Image[x].end(); ++iter ){
+      //   if( *iter == -1 ){
+      //     Image[x].erase(iter);
+      //     break;
+      //   }
+      // }
     }
+    Image = NewImage;
     Width--;
-    //Image = NewImage;
   }
 
   void CarveVerticalSeam(){
     UpdateEnergyMatrix();
     PopulateCumulativeEnergy();
     MarkVerticalSeam();
-    //RemoveVerticalSeam();
+    RemoveVerticalSeam();
   }
 
 
@@ -269,13 +267,15 @@ void UpdateEnergyMatrix(){
   void Carve(int VerticalSeams, int HorizontalSeams){
     for (int Counter = 0; Counter < VerticalSeams; Counter++){
       CarveVerticalSeam();
+      //std::cout << Counter  << std::endl;
     }
+    //std::cout << "finished"  << std::endl;
 
-    RotateImageRight();
-    for (int Counter = 0; Counter < HorizontalSeams; Counter++){    
-      CarveVerticalSeam();
-    }
-    RotateImageLeft();
+    // RotateImageRight();
+    // for (int Counter = 0; Counter < HorizontalSeams; Counter++){    
+    //   CarveVerticalSeam();
+    // }
+    // RotateImageLeft();
   }
 
   void PrintImage(std::string filename){
@@ -311,6 +311,7 @@ int main(int argc, char *argv[])
 
   Image.Carve(VerticalSeams, HorizontalSeams);
   Image.PrintImage(filename);
+  std::cout << "printed"  << std::endl;
 
   return 0;
 }
