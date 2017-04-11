@@ -22,38 +22,38 @@ struct ImageCarver{
   ImageCarver() = default;
 
   int GetEnergy(int x, int y){
-    int Current = Image[x][y];
-    int Above, Below, Right, Left;
+    // int Current = Image[x][y];
+    // int Above, Below, Right, Left;
 
-    if(x == 0){
-      Left = Image[x][y];
-    }else{
-      Left = Image[x-1][y];
-    }
+    // if(x == 0){
+    //   Left = Image[x][y];
+    // }else{
+    //   Left = Image[x-1][y];
+    // }
 
-    if(y == 0){
-      Above = Image[x][y];
-    }else{
-      Above = Image[x][y-1];
-    }
+    // if(y == 0){
+    //   Above = Image[x][y];
+    // }else{
+    //   Above = Image[x][y-1];
+    // }
 
-    if(y == Width - 1){
-      Right = Image[x][y];
-    }else{
-      Right = Image[x+1][y];
-    }
+    // if(y == Width - 1){
+    //   Right = Image[x][y];
+    // }else{
+    //   Right = Image[x+1][y];
+    // }
 
-    if(x == Height - 1){
-      Below = Image[x][y];
-    }
-    else{
-      Below = Image[x][y+1];
-    }
+    // if(x == Height - 1){
+    //   Below = Image[x][y];
+    // }
+    // else{
+    //   Below = Image[x][y+1];
+    // }
 
-    int result = abs(Current - Above) + abs(Current - Below) +
-                  abs(Current - Right) + abs(Current - Left);
+    // int result = abs(Current - Above) + abs(Current - Below) +
+    //               abs(Current - Right) + abs(Current - Left);
 
-    return result;
+    return 0;
   }
 
 void UpdateEnergyMatrix(){
