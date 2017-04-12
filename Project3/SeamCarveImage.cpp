@@ -17,7 +17,7 @@ struct ImageCarver {
 
   ImageCarver(std::string Filename){
     ReadImage(Filename);
-    BuildEnergyMatrix();
+    //BuildEnergyMatrix();
   }
 
   //Utality Functions
@@ -55,28 +55,7 @@ struct ImageCarver {
     OutputFile.close();
   }
 
-  void RebuildImage() {
-    std::vector<int> Temp;
-
-    for(int y = 0; y < Height; y++){
-      for(int x =0; x < Width; x++){
-        if(Image[x][y] != -1)
-          Temp.push_back(Image[x][y]);
-      }
-    }
-
-    Width--;
-    DumpMatrix(Image);
-    
-    int Counter = 0;
-    for(int y = 0; y < Height; y++){
-      for(int x = 0; x < Width; x++){
-        Image[x][y] = Temp[Counter++];
-      }
-    }
-  }
-
-  void DumpMatrix(std::vector<std::vector<int>>& img) {
+  void DumpMatrix(std::vector<std::vector<int>>& img) { //TODO: REFACTOR
     img.clear();
     int a = 0;
     img.reserve(Width);   
@@ -84,7 +63,7 @@ struct ImageCarver {
       img.push_back(std::vector<int>(Height));
   }
 
-  void ParseImage(std::vector<std::string>& Temp, std::ifstream& input_file) {
+  void ParseImage(std::vector<std::string>& Temp, std::ifstream& input_file) { //TODO: REFACTOR
     int steps = 1;
     std::string TempString;
     while(getline(input_file, TempString)){
@@ -128,7 +107,7 @@ struct ImageCarver {
     }
   }
 
-  void RotateImage() {
+  void RotateImage() { //TODO: REFACTOR
     EnergyMatrix.clear();
 
     int w = Width, h = Height;
@@ -147,7 +126,7 @@ struct ImageCarver {
 
   //Actual Seam Carving
 
-  int GetEnergy(int x, int y){
+  int GetEnergy(int x, int y){ //TODO: REFACTOR
     int curPixel = Image[x][y];
     int u, d, r, l;
 
@@ -168,22 +147,12 @@ struct ImageCarver {
     }
   }
 
-  int MarkSeam(){    
-    int seam = 0;
-    for(int i = 0; i < Width; ++i)
-      if(CEnergy[i][Height-1] < CEnergy[seam][Height-1])
-        seam = i;   
-    Image[seam][Height-1] = -1;
-    return seam;
-  }
-
-  void BuildCumulative(){    
+  void BuildCumulative(){ //TODO: REFACTOR
     for(int y = 0; y < Height; y++){
       for(int x = 0; x < Width; x++){
         if(y == 0)
           CEnergy[x][y] = EnergyMatrix[x][y];
-        else {
-          
+        else {          
           int minimum_neighbor, one, two;
           if(x == 0){
             one = CEnergy[x+1][y-1];
@@ -202,10 +171,14 @@ struct ImageCarver {
     }
   }
 
-  void RemoveSeam() {
-    DumpMatrix(CEnergy);  //builds the matrix to the correct size
-    BuildCumulative();
-    int seam = MarkSeam();
+  void MarkSeam(){  //TODO: REFACTOR ME!
+    int seam = 0;
+    for(int i = 0; i < Width; ++i){
+      if(CEnergy[i][Height-1] < CEnergy[seam][Height-1]){
+        seam = i;   
+      }
+    }
+    Image[seam][Height-1] = -1;
 
     for(int i=1; i<Height; ++i){
       int current_height = Height - 1 - i;
@@ -223,24 +196,46 @@ struct ImageCarver {
       seam = (minimum == f? left: minimum == s? center: minimum == t? right: seam);
       Image[seam][current_height] = -1;
     }
+  }
 
-    RebuildImage();
+  void RemoveSeam() {
+    std::vector<int> Temp;
+
+    for(int y = 0; y < Height; y++){
+      for(int x = 0; x < Width; x++){
+        if(Image[x][y] != -1)
+          Temp.push_back(Image[x][y]);
+      }
+    }
+
+    Width--;
+    DumpMatrix(Image);
+    
+    int Counter = 0;
+    for(int y = 0; y < Height; y++){
+      for(int x = 0; x < Width; x++){
+        Image[x][y] = Temp[Counter++];
+      }
+    }
+  }
+
+  void CarveVerticalSeam() {
+    BuildEnergyMatrix();    
+    DumpMatrix(CEnergy);  //builds the matrix to the correct size
+    BuildCumulative();
+    MarkSeam();
+    RemoveSeam();
   }
 
   void Carve(int VerticalSeams, int HorizontalSeams) {
-    int c = 0;
-    while(c++ != VerticalSeams){
-      RemoveSeam();
-      BuildEnergyMatrix();
+    for (int Counter = 0; Counter < VerticalSeams; Counter++){
+      CarveVerticalSeam();      
     }
-    c = 0;
     
     RotateImage();
-    while(c++ != HorizontalSeams){
-      RemoveSeam();
-      BuildEnergyMatrix();
-    }
-    
+    for (int Counter = 0; Counter < HorizontalSeams; Counter++){
+      CarveVerticalSeam();      
+    }    
     RotateImage(); 
   }
 
