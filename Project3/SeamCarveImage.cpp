@@ -26,92 +26,99 @@ struct ImageCarver {
     return val == ' ' || val == '\t' || val == '\n';
   }
 
-  void ReadImage(std::string const& Filename){
-    std::ifstream InputFile;    
-    std::vector<std::string> Temp;
+  int ThreeMin(int A, int B, int C){
+    return std::min(std::min(A,B),C);
+  }
 
+  void ReadImage(std::string const& Filename){
+    std::ifstream InputFile;
     InputFile.open(Filename.c_str());
+
     if(!InputFile){
       std::cout << "File Parsing Failed" << std::endl;
     }
-    ParseImage(Temp, InputFile);
+    std::vector<std::string> RawData = ParseImage(InputFile);
     
     int Counter = 0;
     for(int y = 0; y < Height; y++){
       for(int x = 0; x < Width; x++){
-        Image[x][y] = atoi(Temp.at(Counter++).c_str());
+        Image[x][y] = atoi(RawData.at(Counter++).c_str());
       }
     }
   }
 
   void WriteImage(std::string Filename) {
     std::ofstream OutputFile(Filename.substr(0,Filename.size()-4) + "_processed.pgm"); //create output file
-
     OutputFile << "P2\n" << Width << " " << Height << std::endl << Max << std::endl;
-    for(int y = 0; y < Height; y++)
-      for(int x = 0; x < Width; x++)
+
+    for(int y = 0; y < Height; y++){
+      for(int x = 0; x < Width; x++){
         OutputFile << Image[x][y] << " " << std::endl;
+      }
+    }
 
     OutputFile.close();
   }
 
-  void DumpMatrix(std::vector<std::vector<int>>& img) { //TODO: REFACTOR
-    img.clear();
-    int a = 0;
-    img.reserve(Width);   
-    while(a++ != Width)
-      img.push_back(std::vector<int>(Height));
-  }
+  void DumpMatrix(std::vector<std::vector<int>>& Matrix) {
+    Matrix.clear();
+    Matrix.reserve(Width);
 
-  void ParseImage(std::vector<std::string>& Temp, std::ifstream& input_file) { //TODO: REFACTOR
-    int steps = 1;
-    std::string TempString;
-    while(getline(input_file, TempString)){
-      if(TempString[0] == '#') {
-        continue;
-      }
-      switch(steps){
-        case 1:
-          ++steps;
-          break;
-        case 2: {
-          int Space = TempString.find(" ");
-          std::string WidthString = TempString.substr(0, Space);
-          std::string HeightString = TempString.substr(Space + 1);
-          Width = atoi(WidthString.c_str());
-          Height = atoi(HeightString.c_str());
-          DumpMatrix(Image);
-          ++steps;
-          break;
-        }
-        case 3:
-          Max = TempString;
-          ++steps;
-          break;
-        default: {
-          std::string Val = "";
-          int len = TempString.length();
-          for(int i=0; i<len; ++i){
-            if(IsEmpty(TempString[i])){
-              Temp.push_back(Val);
-              Val = "";
-            } else {
-              Val += TempString[i];
-            }
-          }
-          if(Val != "")
-            Temp.push_back(Val);
-          break;
-        }
-      }
+    for (int x = 0; x < Width; x++){
+      Matrix.push_back(std::vector<int>(Height));
     }
   }
 
-  void RotateImage() { //TODO: REFACTOR
+  std::vector<std::string> ParseImage(std::ifstream& InputFile){
+    std::vector<std::string> Temp;
+    int Counter = 1;
+    std::string TempString;
+    while(getline(InputFile, TempString)){
+      if(TempString[0] == '#') {
+        // it's a comment, do nothing
+      }else {
+        switch(Counter){
+          case 1:{
+            //we don't care about the first line
+            Counter++;
+            break;
+          }
+          case 2: {
+            int Space = TempString.find(" ");
+            Width = atoi(TempString.substr(0, Space).c_str());
+            Height = atoi(TempString.substr(Space + 1).c_str());
+            DumpMatrix(Image);
+            Counter++;
+            break;
+          }
+          case 3:
+            Max = TempString;
+            Counter++;
+            break;
+          default: {
+            std::string Val = "";
+            for(int i = 0; i < (int)TempString.length(); i++){
+              if(IsEmpty(TempString[i])){
+                Temp.push_back(Val);
+                Val = "";
+              } else {
+                Val += TempString[i];
+              }
+            }
+            if(Val != "")
+              Temp.push_back(Val);
+            break;
+          }
+        }
+      }
+    }
+    return Temp;
+  }
+
+  void RotateImage(){
     EnergyMatrix.clear();
 
-    int w = Width, h = Height;
-    Width = h, Height = w; 
+    std::swap(Height, Width);
 
     std::vector<std::vector<int>> Temp = Image;
     DumpMatrix(Image);
@@ -126,16 +133,37 @@ struct ImageCarver {
 
   //Actual Seam Carving
 
-  int GetEnergy(int x, int y){ //TODO: REFACTOR
-    int curPixel = Image[x][y];
-    int u, d, r, l;
+  int GetEnergy(int x, int y){
+    int Current = Image[x][y];
+    int Above, Below, Right, Left;
 
-    l = (x == 0? curPixel: Image[x-1][y]);
-    u = (y == 0?  curPixel: Image[x][y-1]);
-    r = (x == Width-1? curPixel: Image[x+1][y]);
-    d = (y == Height-1? curPixel: Image[x][y+1]);
+    if(x == 0){
+      Left = Current;
+    }else{
+      Left = Image[x-1][y];
+    }
 
-    return abs(curPixel-u) + abs(curPixel-d) + abs(curPixel-r) + abs(curPixel-l);
+    if(y == 0){
+      Above = Current;
+    }else{
+      Above = Image[x][y-1];
+    }
+
+    if(x == Width - 1){
+      Right = Current;
+    }else{
+      Right = Image[x+1][y];
+    }
+
+    if(y == Height - 1){
+      Below = Current;
+    }
+    else{
+      Below = Image[x][y+1];
+    }
+
+    return abs(Current - Above) + abs(Current - Below) +
+              abs(Current - Right) + abs(Current - Left);
   }
 
   void BuildEnergyMatrix() {
@@ -147,54 +175,69 @@ struct ImageCarver {
     }
   }
 
-  void BuildCumulative(){ //TODO: REFACTOR
+   void BuildCumulative(){
+    DumpMatrix(CEnergy); //to get proper sized martix
     for(int y = 0; y < Height; y++){
       for(int x = 0; x < Width; x++){
-        if(y == 0)
+        if(y == 0){
           CEnergy[x][y] = EnergyMatrix[x][y];
-        else {          
-          int minimum_neighbor, one, two;
+        }
+        else{
+          int MinPrevNeigh;
           if(x == 0){
-            one = CEnergy[x+1][y-1];
-            two = CEnergy[x][y-1];           
-          } else if(x == Width - 1){
-            one = CEnergy[x-1][y-1];
-            two = CEnergy[x][y-1];           
-          } else {
-            one = std::min(CEnergy[x-1][y-1],CEnergy[x+1][y-1]);
-            two = CEnergy[x][y-1];           
+            MinPrevNeigh = std::min(CEnergy[x+1][y-1],
+              CEnergy[x][y-1]);
           }
-          minimum_neighbor = std::min(one, two);
-          CEnergy[x][y] = EnergyMatrix[x][y] + minimum_neighbor;
+          else if(x == (Width - 1))
+          {
+            MinPrevNeigh = std::min(CEnergy[x-1][y-1],
+              CEnergy[x][y-1]);
+          }
+          else
+          {
+            MinPrevNeigh = ThreeMin(CEnergy[x-1][y-1],CEnergy[x+1][y-1],CEnergy[x][y-1]);
+          }
+          CEnergy[x][y] = EnergyMatrix[x][y] + MinPrevNeigh;
         }
       }
     }
-  }
+  } 
 
-  void MarkSeam(){  //TODO: REFACTOR ME!
-    int seam = 0;
-    for(int i = 0; i < Width; ++i){
-      if(CEnergy[i][Height-1] < CEnergy[seam][Height-1]){
-        seam = i;   
+  void MarkSeam(){
+    int Pos = 0;
+    for(int x = 0; x < Width; x++){
+      if(CEnergy[x][Height-1] < CEnergy[Pos][Height-1]){
+        Pos = x;   
       }
     }
-    Image[seam][Height-1] = -1;
+    Image[Pos][Height-1] = -1;
 
-    for(int i=1; i<Height; ++i){
-      int current_height = Height - 1 - i;
-      int right = seam + 1, center = seam, left = seam - 1;
+    for(int Current = Height-1; Current >= 0; Current--){
+      int Right = Pos + 1;
+      int Center = Pos;
+      int Left = Pos - 1;
 
-      if(right < 0 || right >= Width)
-        right = center;
-      if(left < 0 || left >= Width)
-        left = center;
+      if(Right < 0 || Right >= Width){
+        Right = Center;
+      }
 
-      int minimum = std::min(std::min(CEnergy[right][current_height],CEnergy[left][current_height]),
-        CEnergy[center][current_height]);
-       int f = CEnergy[left][current_height], s = CEnergy[center][current_height],
-        t = CEnergy[right][current_height];
-      seam = (minimum == f? left: minimum == s? center: minimum == t? right: seam);
-      Image[seam][current_height] = -1;
+      if(Left < 0 || Left >= Width){
+        Left = Center;
+      }
+
+      int Min = ThreeMin(CEnergy[Right][Current], CEnergy[Left][Current], CEnergy[Center][Current]);
+
+      if (Min == CEnergy[Left][Current]){
+        Pos = Left;
+      } 
+      else if (Min == CEnergy[Center][Current]){
+        Pos = Center;
+      }
+      else if (Min == CEnergy[Right][Current]){
+        Pos = Right;
+      }
+
+      Image[Pos][Current] = -1;
     }
   }
 
