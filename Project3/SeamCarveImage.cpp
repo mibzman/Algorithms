@@ -4,12 +4,33 @@
 #include <vector>
 #include <cassert>
 
+struct Matrix {
+  std::vector<std::vector<int>> Arr; 
+
+  std::vector<int>& operator[] (const int index){
+    return Arr[index];
+  }
+
+  void Rebuild(int Width, int Height){
+    Arr.clear();
+    Arr.reserve(Width);
+
+    for (int x = 0; x < Width; x++){
+      Arr.push_back(std::vector<int>(Height));
+    }
+  }
+
+  void Clear(){
+    Arr.clear();
+  }
+};
+
 struct ImageCarver {
-  std::vector<std::vector<int>> Image; 
-  std::vector<std::vector<int>> EnergyMatrix;
-  std::vector<std::vector<int>> CEnergy;
-  int Width;
-  int Height;
+  Matrix Image; 
+  Matrix EnergyMatrix;
+  Matrix CEnergy;
+  int Width; //since all the matracies share the same size,
+  int Height; //I decided to keep the height/width in here for simplicity
   
   std::string Max;  //this is a string because we never use it
 
@@ -60,15 +81,6 @@ struct ImageCarver {
     OutputFile.close();
   }
 
-  void DumpMatrix(std::vector<std::vector<int>>& Matrix) {
-    Matrix.clear();
-    Matrix.reserve(Width);
-
-    for (int x = 0; x < Width; x++){
-      Matrix.push_back(std::vector<int>(Height));
-    }
-  }
-
   std::vector<std::string> ParseImage(std::ifstream& InputFile){
     std::vector<std::string> Temp;
     int Counter = 1;
@@ -87,7 +99,7 @@ struct ImageCarver {
             int Space = TempString.find(" ");
             Width = atoi(TempString.substr(0, Space).c_str());
             Height = atoi(TempString.substr(Space + 1).c_str());
-            DumpMatrix(Image);
+            Image.Rebuild(Width, Height);
             Counter++;
             break;
           }
@@ -96,6 +108,7 @@ struct ImageCarver {
             Counter++;
             break;
           default: {
+
             std::string Val = "";
             for(int i = 0; i < (int)TempString.length(); i++){
               if(IsEmpty(TempString[i])){
@@ -116,12 +129,12 @@ struct ImageCarver {
   }
 
   void RotateImage(){
-    EnergyMatrix.clear();
+    EnergyMatrix.Clear();
 
     std::swap(Height, Width);
 
-    std::vector<std::vector<int>> Temp = Image;
-    DumpMatrix(Image);
+    Matrix Temp = Image;
+    Image.Rebuild(Width, Height);
     
     for(int y = 0; y < Height; y++){
       for(int x = 0; x < Width; x++){
@@ -167,7 +180,7 @@ struct ImageCarver {
   }
 
   void BuildEnergyMatrix() {
-    DumpMatrix(EnergyMatrix);
+    EnergyMatrix.Rebuild(Width, Height);
     for(int y = 0; y < Height; y++){
       for(int x = 0; x < Width; x++){
         EnergyMatrix[x][y] = GetEnergy(x,y);
@@ -176,7 +189,7 @@ struct ImageCarver {
   }
 
    void BuildCumulative(){
-    DumpMatrix(CEnergy); //to get proper sized martix
+    CEnergy.Rebuild(Width, Height); //to get proper sized martix
     for(int y = 0; y < Height; y++){
       for(int x = 0; x < Width; x++){
         if(y == 0){
@@ -252,7 +265,7 @@ struct ImageCarver {
     }
 
     Width--;
-    DumpMatrix(Image);
+    Image.Rebuild(Width, Height);
     
     int Counter = 0;
     for(int y = 0; y < Height; y++){
@@ -264,7 +277,7 @@ struct ImageCarver {
 
   void CarveVerticalSeam() {
     BuildEnergyMatrix();    
-    DumpMatrix(CEnergy);  //builds the matrix to the correct size
+    CEnergy.Rebuild(Width, Height);  //builds the matrix to the correct size
     BuildCumulative();
     MarkSeam();
     RemoveSeam();
