@@ -1,1 +1,0 @@
-/usr/bin/c++   -std=c++11 -g   CMakeFiles/ImageCarver.dir/SeamCarveImage.cpp.o  -o ImageCarver -rdynamic 

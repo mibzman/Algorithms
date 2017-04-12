@@ -1,4 +1,0 @@
-/home/mibzman/S4/Algorithms/Project3/build/CMakeFiles/test.dir
-/home/mibzman/S4/Algorithms/Project3/build/CMakeFiles/edit_cache.dir
-/home/mibzman/S4/Algorithms/Project3/build/CMakeFiles/rebuild_cache.dir
-/home/mibzman/S4/Algorithms/Project3/build/CMakeFiles/ImageCarver.dir
