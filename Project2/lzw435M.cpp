@@ -213,40 +213,45 @@ std::string compress(std::string file) {
   std::map<std::string,int> dictionary;
   for (int i = 0; i < 256; i++)
     dictionary[std::string(1, i)] = i;
- 
+
+
+  int currentBitSize = 9; 
   std::string w;
   for (std::string::const_iterator it = uncompressed.begin();
        it != uncompressed.end(); ++it) {
+    currentBitSize = getBitLengthForValue(dictSize);
     char c = *it;
     std::string wc = w + c;
     if (dictionary.count(wc))
       w = wc;
     else {
-      output += int2BinaryString(dictionary[w], getBitLengthForValue(dictSize));
+      output += int2BinaryString(dictionary[w], currentBitSize);
       // Add wc to the dictionary.
       if (dictSize < 65536){
         dictionary[wc] = dictSize++;
       }
+      //output += int2BinaryString(dictionary[w], getBitLengthForValue(dictSize));
       
       w = std::string(1, c);
     }
+    //currentBitSize = getBitLengthForValue(dictSize);
   }
  
   // Output the code for w.
   if (!w.empty())
-    output += int2BinaryString(dictionary[w], getBitLengthForValue(dictSize));
+    output += int2BinaryString(dictionary[w], currentBitSize);
 
   //dump dictionary
-  /*
+  
   std::map<int,std::string> dict2;
-
+/*
   for (auto iterator = dictionary.begin(); iterator != dictionary.end(); ++iterator){
     dict2[iterator->second] = iterator->first;
   }
 
   for (auto iterator = dict2.begin(); iterator != dict2.end(); ++iterator){
      std::cout << iterator->second << ":" << iterator->first << std::endl;
-  } */
+  }*/
   return output;
 }
 
@@ -272,6 +277,10 @@ std::string decompress(std::string cBits) {
     thisNum = binaryString2Int(thisBitString);
     //hooray!  we've gotten the next number from the file.
     //now we can do all the normal LZW stuff with it
+
+    if (dictSize == 511){
+      thisNum = binaryString2Int(thisBitString.substr(1,8));
+    }
 
     if (dictionary.count(thisNum)){
       entry = dictionary[thisNum];

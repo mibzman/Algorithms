@@ -1,17 +1,43 @@
 reset;
-sudo cmake ..; 
+cmake -DCMAKE_BUILD_TYPE=Debug ..; 
 sudo make;
 if [ $? -eq 0 ];
 then
     echo -- Program Built;
-        sudo ./LZW d test.txt.zip;
+        sudo ./ImageCarver twoBalls.pgm 68 0;
         if [ $? -eq 139 ];
         then
             echo "-- Program crashed!";
-            gdb ./LZW;
+            gdb ./ImageCarver;
 
         else
                 echo -- Program Run;
+
+                javac MyDiff.java;
+                
+                # echo -- Comparing With Source;
+                # java MyDiff twoBalls_processed.pgm twoBalls.pgm
+
+                echo -- Comparing With Test 68 0
+                java MyDiff twoBalls_processed.pgm twoBalls_processed_68_0.pgm
+
+                echo -- Comparing With Test 0 116
+                sudo ./ImageCarver twoBalls.pgm 0 116;
+                java MyDiff twoBalls_processed.pgm twoBalls_processed_0_116.pgm
+
+                echo -- Comparing With Test 211 68
+                sudo ./ImageCarver twoBalls.pgm 211 68;
+                java MyDiff twoBalls_processed.pgm twoBalls_processed_211_68.pgm
+                
+                # sudo rsub twoBalls_processed.pgm
+
+                # cp twoBalls_processed.pgm ..;
+                # (cd ..; 
+                #     git add twoBalls_processed.pgm; 
+                #     git commit -m "automated Image Update"; 
+                #     git push;);
+
+                sudo rm twoBalls_processed.pgm;
         fi
 
 else 
