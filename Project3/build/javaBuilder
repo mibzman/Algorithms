@@ -1,0 +1,3 @@
+reset;
+javac MyDiff.java;
+java MyDiff twoBalls_processed.pgm twoBalls_processed.pgm;

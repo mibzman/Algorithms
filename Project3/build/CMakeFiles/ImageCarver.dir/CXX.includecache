@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/mibzman/S4/Algorithms/Project3/SeamCarveImage.cpp
+iostream
+-
+fstream
+-
+string
+-
+vector
+-
+cassert
+-
+
